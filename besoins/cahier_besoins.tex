@@ -1,0 +1,63 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[francais]{babel}
+\usepackage{setspace}
+
+\title{Cahier des besoins - Mesure du rythme cardiaque à partir du flux vidéo de la Kinect 2}
+
+\author{Hereiti \bsc{Hatitio} - Anta \bsc{Mbaye} - Maxime \bsc{Vincent} - Jean-Baptiste \bsc{Rey}}
+
+\begin{document}
+\maketitle
+
+\section*{Besoins fonctionnels}
+Pour spécifier les fonctionnalités proposées et les services à rendre par notre projet, nous avons défini trois grands besoins fonctionnels : récupérer un flux vidéo, l'analyser pour interpréter le rythme cardiaque et sortir le résultat.
+
+\subsection*{Récupérer un flux vidéo}
+Notre client nous a proposé d'utiliser Kinect 2 pour notre projet : elle présente les avantages de posséder des algorithmes de tracking dans son API et un flux infrarouge, en plus des flux classiques RGB.
+
+Un problème s'est vite présenté : l'API de Kinect 2 est utilisable uniquement sur Windows 8. Nous avons donc eu deux alternatives : changer de périphérique d'entrée et utiliser une webcam, ou utiliser libfreenect2 sur Linux et implémenter nous-même des algorithmes de tracking avec opencv 2.4.
+
+La kinect 2 nous servirait simplement d'une caméra HD (1080p) possédant éventuellement un flux infrarouge.
+
+\subsection*{Analyser un flux vidéo pour interpréter le rythme cardiaque}
+Ce besoin fonctionnel principal est divisé en différents sous-besoins fonctionnels.
+\begin{enumerate}
+\item  Récupérer un flux vidéo
+
+\textit{Cette étape peut être réalisée de deux façons : enregistrer le flux vidéo dans un ficher [à préciser] ou analyser en temps réel.
+Plusieurs possibilités pour la suite du de l'analyse du flux vidéo : une personne immobile puis en mouvement, ensuite étendre à plusieurs personnes [nombre max].}
+
+\item Détecter la zone de traitement
+
+Reconnaître au moins un visage, ou plus, l'algorithme de tracking de la kinect 2 étant capable de prendre en compte six personnes.
+L'analyse du rythme cardiaque semble plus efficace (voir prototype) si nous isolons une zone du front.
+Si nous rencontrons une difficulté pour le suivi des visages, une alternative serait de tracer un cadre pour que la personne place son visage dans cette zone à analyser.
+
+\item Suivre la zone de traitement
+
+Suivre la zone de traitement lorsque la ou les personnes sont en mouvement. Il est possible de rencontrer une difficulté dans le cas ou plusieurs personne se   chevauchent en se déplacent, on pourrait déterminer alors une zone de mouvement pour chaque personne.
+
+\begin{Huge}
+SCHEMA ZONE DEPLACEMENT
+\end{Huge}
+
+\item Identifier la ou les personnes
+
+Donner un identifiant numérique à chaque personne détectée : utile pour l'affichage des résultats dans le cas où plusieurs rythmes cardiaques.
+
+\item Afficher des messages d'erreurs
+
+Possibilité d'afficher des messages d'avertissement dans le cas ou :
+
+\begin{enumerate}
+\item [] -
+
+\end{enumerate}
+
+\end{enumerate}
+\subsection*{Affichage du résultat}
+\section*{Besoins non fonctionnels}
+\end{document}
