@@ -15,6 +15,12 @@
 
 \tableofcontents
 \newpage
+
+\section*{Introduction}
+
+Ce projet a pour objectif d'acquérir l'activité cardiaque d'une personne sans contact, uniquement par le biais d'un flux vidéo provenant d'une caméra.
+Il sera possible de suivre une ou plusieurs personnes, éventuellement en mouvement, en reconnaissant préalablement leur visage. Un algorithme calculant les pulsations sera appliqué sur les zones suivies, et permettra d'obtenir une estimation du rythme cardiaque du ou des sujets filmés. Les résultats seront stockés sur la machine exécutant le programme et éventuellement envoyés vers des appareils distants.  
+
 \section{Besoins fonctionnels}
 Pour spécifier les fonctionnalités proposées et les services à rendre par notre projet, nous avons défini trois grands besoins fonctionnels : récupérer un flux vidéo, l'analyser pour interpréter le rythme cardiaque et sortir le résultat.
 
@@ -51,6 +57,12 @@ Donner un identifiant numérique à chaque personne détectée : utile pour l'af
 
 \subsection{Affichage du résultat}
 
+Trois cas sont envisageables : Le premier consiste à afficher sur une console et écrire dans un fichier log l'entier représentant la pulsation.
+Le deuxième consiste à calculer et afficher le nombre de battements par minute dans les mêmes conditions que précédemment. Le troisième consiste à afficher sur une nouvelle fenêtre une courbe de pulsation.
+
+Le rythme cardiaque obtenu pourra être utilisé sur d'autres appareils externes au programmes. 
+Nous enverrons donc un entier par un protocole réseau (TCP, OSC ou LSL) sans aucun cryptage.
+On pourra implémenter une architecture de Client-Serveur. L'ordinateur effectuant l'analyse sera considéré comme le serveur et les autres appareils comme les clients.
 
 \subsubsection{Afficher des messages d'erreurs}
 
@@ -72,7 +84,7 @@ Possibilité d'afficher des messages d'avertissement pour l'utilisateur dans le 
 
 \section{Besoins non fonctionnels}
 
-Les besoins non fonctionnels de notre projet se résume en trois parties également.
+Les besoins non fonctionnels de notre projet se résument en trois parties également.
 \subsection{Portabilité}
 Le programme doit être portable et modulaire. Notre programme sera découpé en plusieurs parties indépendantes les unes des autres. Ceci assurera la maintenabilité. Par exemple si un algorithme de tracking plus performant venait à être créé il pourrait remplacer le notre.
 
@@ -80,10 +92,10 @@ Le programme doit être portable et modulaire. Notre programme sera découpé en
 
 \subsubsection{Précision du rythme cardiaque}
 
-En testant différents algorithmes de calcul de rythme cardiaque nous prendrons une marge de cinq battements par minutes d'écart.
+En testant différents algorithmes de calcul de rythme cardiaque nous prendrons une marge d'erreur de cinq battements par minute.
 \subsubsection{Temps du traitement}
 
-Différents tests ont montré qu'il fallait un temps de calcul initial pour pouvoir obtenir les pulsations. Ce temps varie entre 15 et 30 secondes.
+Différents tests ont montré qu'il fallait un temps de calcul initial pour pouvoir obtenir les pulsations. Le calcul s'effectue au même moment que la scène filmée, l'affichage quant à lui se fait en différé. Ce temps varie entre 15 et 30 secondes.
 
 \subsection{Ethique}
 
@@ -118,30 +130,29 @@ Voici une liste d'algorithmes que nous avons testé afin de faire une étude de 
 \begin{enumerate}
 
 \item[] - FaceTracker en C++ 
-créé par Jason Saragih(http://jsaragih.org/) et maintenu par Kyle McDonald (http://kylemcdonald.net/)
+créé par Jason Saragih \\(http://jsaragih.org/) et maintenu par Kyle McDonald\\ (http://kylemcdonald.net/)
 
 Le tracking de ce programme permet de suivre une personne. Il est fluide (10 frames secondes).
-https://github.com/mossblaser/HeartMonitor
-\item[] - HearMonitor en Python par Mossblaser (https://github.com/mossblaser/HeartMonitor).
+\newline
+\item[] - HearMonitor en Python par Mossblaser \\(https://github.com/mossblaser/HeartMonitor).
+
 
 Ce programme calcule le rythme cardiaque d'une personne immobile. En appuyant sur la touche espace, la zone de traitement est mise à jour dans le cas où la personne s'est déplacée. Le calcul du rythme cardiaque se fait sur une fenêtre de trente secondes. 
-Une fois opérationnel, la précision contient un écart de l'ordre de 10 battements minutes.
+Une fois opérationnel, la précision contient un écart de l'ordre de dix battements minutes.
 
 \item[] - MultiTrackingPhoto auteur Inconnu 
 
 Le programme prend en paramètre une photo et détecte les visages sur celle ci.
 Son exécution est de l'ordre de 0.3 seconde pour détecter une vingtaine de visages.
-
+\newline
  \item[] - webcam-pulse-detector écrit par NASA Glenn Research Center \\(http://www.nasa.gov/centers/glenn)
 
-Ce programme calcule avec une précision de 5 battements par minutes d'écart après trente secondes d'initialisation.
+Ce programme calcule avec une précision de cinq battements par minutes d'écart après trente secondes d'initialisation.
 
 \end{enumerate}
-
-
-
-Cette étape peut être réalisée de deux façons : enregistrer le flux vidéo dans un ficher source ou analyser en temps réel.
-Plusieurs possibilités pour la suite du de l'analyse du flux vidéo : une personne immobile puis en mouvement, ensuite étendre à plusieurs personnes [nombre max].
+\subsection{Diagramme de Gantt}
+\includegraphics[scale=0.40]{Gantt.png}
+La distribution des tâches n'a pas encore été décidé avec précision.\\ Elle sera effectuée au cours de la phase de conception.
 
 
 \end{document}
