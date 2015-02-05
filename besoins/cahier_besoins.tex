@@ -108,20 +108,32 @@ Notre programme sera compatible avec les distributions :
 Pour Windows si la kinect 2 est utilisée, Windows 8 ou 8.1 sera obligatoire.
 
 \subsection{Test}
-Les différents test disponibles dans le dépôt nécessite l'installation d'OpenCV
+Les différents test disponibles dans le dépôt nécessite l'installation d'OpenCV.
+Les tests ont été effectué avec une caméra Creative WebCam Live!
 
 Voici une liste d'algorithme que nous avons testé afin de faire une étude de faisabilité : 
 
 \begin{enumerate}
 
+\item[] - FaceTracker en C++ 
+créé par Jason Saragih(http://jsaragih.org/) et maintenu par Kyle McDonald (http://kylemcdonald.net/)
 
-\item[] - FaceTracker en C++ créé par Jason Saragih(http://jsaragih.org/) et maintenu par [Kyle McDonald](http://kylemcdonald.net/)
-
-Le tracking de ce programme permet de suivre une personne. Il est très fluide et a très peu de temps de latence.
-
+Le tracking de ce programme permet de suivre une personne. Il est fluide (10 frames secondes).
+https://github.com/mossblaser/HeartMonitor
 \item[] - HearMonitor en Python par Mossblaser (https://github.com/mossblaser/HeartMonitor).
 
-Ce programme calcule le rythme ca
+Ce programme calcule le rythme cardiaque d'une personne immobile, en appuyant sur espace, la zone de traitement est mis à jour. Il faut une trentaine de secondes pour que le programme se mettent en place. 
+Une fois opérationnel, la fourchette de précision est de l'ordre de 10 battements minutes.
+
+\item[] - MultiTrackingPhoto auteur Inconnu 
+
+Le programme prend en paramètre une photo et détecte les visages sur celle ci.
+Son exécution est de l'ordre de 0.3 seconde pour détecter une vingtaine de visages.
+
+ \item[] - webcam-pulse-detector écrit par NASA Glenn Research Center (http://www.nasa.gov/centers/glenn)
+
+Ce programme calcule avec une précision de 5 battements par minutes d'écart après trente seconde d'initialisation.
+
 \end{enumerate}
 
 
