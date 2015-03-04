@@ -46,11 +46,10 @@ def detector(feed,frame):
     # Point of entry in execution mode
     # cv.NamedWindow(WINDOW_NAME, cv.CV_WINDOW_AUTOSIZE)
     # cam = cv.CaptureFromCAM(CAMERA_INDEX)
-    storage = cv2.CreateMemStorage()
-    cascade = cv2.Load(HAAR_CASCADE_PATH)
+    storage = cv2.cv.CreateMemStorage()
+    cascade = cv2.cv.Load(HAAR_CASCADE_PATH)
     faces = []
     while True: 
-        faces = detect_faces(feed)
         detected = cv2.HaarDetectObjetcs(image, cascade, storage)
         if detected:
             for (x,y,w,h),n in detected:
