@@ -29,38 +29,33 @@
 #-*- coding: utf-8 -*-
  
 # Python binding for OpenCV
-import cv
+import cv2
  
-HAAR_CASCADE_PATH = "/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml"
-CAMERA_INDEX = -1
+HAAR_CASCADE_PATH = "../sources/haarcascades/haarcascade_frontalface_alt.xml"
+CAMERA_INDEX = 1
 WINDOW_NAME = "Real time face detection with Python and OpenCV"
  
-def detect_faces(image):
-    """
-    Detect face(s) in an image.
-    """
-    faces = []
-    detected = cv.HaarDetectObjects(image, cascade, storage, 1.2, 2, \
-                                    cv.CV_HAAR_DO_CANNY_PRUNING, (100,100))
-    if detected:
-        for (x,y,w,h),n in detected:
-            faces.append((x,y,w,h))
-    return faces
+# def detect_faces(image):
+#     """
+#     Detect face(s) in an image.
+#     """
+#     faces = []
+#     return faces
  
-if __name__ == "__main__":
+def detector(feed,frame):
     # Point of entry in execution mode
-    cv.NamedWindow(WINDOW_NAME, cv.CV_WINDOW_AUTOSIZE)
-    cam = cv.CaptureFromCAM(CAMERA_INDEX)
-    storage = cv.CreateMemStorage()
-    cascade = cv.Load(HAAR_CASCADE_PATH)
+    # cv.NamedWindow(WINDOW_NAME, cv.CV_WINDOW_AUTOSIZE)
+    # cam = cv.CaptureFromCAM(CAMERA_INDEX)
+    storage = cv2.CreateMemStorage()
+    cascade = cv2.Load(HAAR_CASCADE_PATH)
     faces = []
-    while True:
-        feed = cv.QueryFrame(cam)
-        cv.WaitKey(20)
- 
+    while True: 
         faces = detect_faces(feed)
- 
+        detected = cv2.HaarDetectObjetcs(image, cascade, storage)
+        if detected:
+            for (x,y,w,h),n in detected:
+                faces.append((x,y,w,h))
         for (x,y,w,h) in faces:
-            cv.Rectangle(feed, (x,y), (x+w,y+h), 255)
+            cv2.Rectangle(feed, (x,y), (x+w,y+h), 255)
  
-        cv.ShowImage(WINDOW_NAME, feed)
+        cv2.ShowImage(frame, feed)

@@ -1,7 +1,5 @@
 from Tkinter import *
 import cv2
-from PIL import Image, ImageTk
-import os.path
 font_title=('courier', 12,'bold')
 font_other=('courier', 10,'bold')
 def camSelect():

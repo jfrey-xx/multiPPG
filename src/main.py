@@ -1,6 +1,8 @@
 from Tkinter import *
 import cv2
 import webcamSelect
+import faceDetector
+import interface
 from PIL import Image, ImageTk
 import os.path
 font_title=('courier', 12,'bold')
@@ -9,6 +11,8 @@ def main():
 
 	cam = webcamSelect.camSelect()
 	cap = cv2.VideoCapture(cam)
+	feed =cap.read()
+	# faces = cv2.QueryFrame(cam)
 	root = Tk()
 
 	# Sers seulement pour se reperer
@@ -47,7 +51,10 @@ def main():
 		lmain.imgTK = imgTK
 		lmain.configure(image=imgTK)
 		lmain.after(10, show_frame)
-	show_frame()
+		return frame
+	frame = show_frame()
+	root.bind('<b>', lambda e: faceDetector.detector(feed,frame))
+
 	root.mainloop()
 
 if __name__ == '__main__':
