@@ -1,12 +1,17 @@
 from Tkinter import *
 import cv2
+import cv
 import webcamSelect
 import faceDetector
 import interface
 from PIL import Image, ImageTk
 import os.path
+
+cascPath = "../sources/haarcascades/haarcascade_frontalface_alt.xml"
+
 font_title=('courier', 12,'bold')
 font_other=('courier', 10,'bold')
+
 def main():
 
 	cam = webcamSelect.camSelect()
@@ -44,16 +49,23 @@ def main():
 
 	def show_frame():
 		_, frame = cap.read()
-		frame = cv2.flip(frame, 1)
 		cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
 		img = Image.fromarray(cv2image)
+		faceCascade = cv2.CascadeClassifier(cascPath)
+		tt = faceCascade.detectMultiScale(cv2image,scaleFactor=1.1,minNeighbors=5,minSize=(30, 30),flags=cv2.cv.CV_HAAR_SCALE_IMAGE)
+    	# Draw a rectangle around the faces
+    	print tt
+    	for (x, y, w, h) in tt:
+        	cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+    	# Display the resulting frame
+		cv2.imshow('Video', frame)
 		imgTK = ImageTk.PhotoImage(image=img)
 		lmain.imgTK = imgTK
 		lmain.configure(image=imgTK)
 		lmain.after(10, show_frame)
 		return frame
 	frame = show_frame()
-	root.bind('<b>', lambda e: faceDetector.detector(feed,frame))
+	# root.bind('<b>', lambda e: faceDetector.detector(feed,frame))
 
 	root.mainloop()
 
