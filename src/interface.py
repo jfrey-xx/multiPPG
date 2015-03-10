@@ -41,11 +41,12 @@ def gui():
     if utility.system == "linux" or utility.system == "linux2":
         global tab
         tab = utility.transWebcamString()
-        for i in range (0,len(tab)):
-            print tab[i]
-            choix = Radiobutton(cam_frame, text=tab[i], variable=cam, value=i, command=None)
-            choix.config(font=utility.font_other,bg=utility.color1)
-            choix.pack(anchor=W)
+        if not len(tab)==0:
+            for i in range (0,len(tab)):
+                print tab[i]
+                choix = Radiobutton(cam_frame, text=tab[i], variable=cam, value=i, command=None)
+                choix.config(font=utility.font_other,bg=utility.color1)
+                choix.pack(anchor=W)
     else :
         isok=True
         while isok:

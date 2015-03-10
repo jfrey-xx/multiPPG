@@ -2,7 +2,7 @@ import multiprocessing
 import cv2
 import cv
 
-HAAR_CASCADE_PATH = "../../../trunk/sources/haarcascades/haarcascade_frontalface_alt.xml"
+HAAR_CASCADE_PATH = "../sources/haarcascades/haarcascade_frontalface_alt.xml"
 e = multiprocessing.Event()
 p = None
 

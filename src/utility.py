@@ -1,5 +1,7 @@
-from os import *
+import os
+import error
 from string import maketrans
+import sys
 from sys import platform as system
 
 # system represente l OS 
@@ -24,18 +26,21 @@ color1='#AED9FA'
  #
 def transWebcamString():
     path = '/dev/v4l/by-id'
-    dirs = listdir(path)
-    chain = str()
-    tab = []
-    i=0
-    for file in dirs:
-        chain = file
-        table = maketrans('_',' ')
-        chain=chain.translate(table, ' ')
-        chain=chain.replace('usb-','')
-        chain=chain.replace('-video-index0','')
-        if i==0:
-        	chain=chain.replace(' ','')
-        tab.append(chain)  
-        i+=1
-    return tab
+    if not os.path.exists(path):
+        error.webcam_error()
+    else :
+        dirs = listdir(path)
+        chain = str()
+        tab = []
+        i=0
+        for file in dirs:
+            chain = file
+            table = maketrans('_',' ')
+            chain=chain.translate(table, ' ')
+            chain=chain.replace('usb-','')
+            chain=chain.replace('-video-index0','')
+            if i==0:
+            	chain=chain.replace(' ','')
+            tab.append(chain)  
+            i+=1
+        return tab
