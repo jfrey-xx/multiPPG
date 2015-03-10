@@ -17,21 +17,23 @@ from sys import platform as system
 
 font_title=('arial', 12)#,'italic')
 font_other=('arial', 10)#,'bold')
+
 color1='#AED9FA'
+color_erreur ='#ff8282'
 
 ##
- #  This fonction catch webcam name and makes ergonomic
+ # @brief This fonction catch webcam name and makes ergonomic
  #  Webcam must be compatible with video4linux 
  # @return A table with the different webcam's name
  #
 def transWebcamString():
     path = '/dev/v4l/by-id'
+    tab = []
     if not os.path.exists(path):
-        error.webcam_error()
+        return tab
     else :
-        dirs = listdir(path)
+        dirs = os.listdir(path)
         chain = str()
-        tab = []
         i=0
         for file in dirs:
             chain = file

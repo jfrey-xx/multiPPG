@@ -1,4 +1,5 @@
 import multiprocessing
+import error
 import cv2
 import cv
 
@@ -42,7 +43,7 @@ def start(e,cam):
     while(True):
         frame = cv.QueryFrame(cap)
         faces = detect_faces(frame)
-        # nbface = len(faces) #Pour les calculs a venir
+        nbface = len(faces) #Pour les calculs a venir
         cv.ShowImage(WINDOW_NAME, frame)
         key = cv.WaitKey(20) & 0xFF
         if key == 27: # 27 = ESC

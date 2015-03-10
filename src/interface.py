@@ -1,6 +1,7 @@
 import multiprocessing
 from Tkinter import *
 import utility
+import error
 import cv2
 import video
 
@@ -15,7 +16,7 @@ def envoiCam():
 # The button start permit to lunch OpenCv Capture. (call the fonction start of the file video.py)
 #  
 def gui():
-    print utility.system #Affiche le systeme d'exploitation
+    print utility.system #Print OS
     root = Tk()
     root.resizable(width=False,height=False)
     root.title('Mesure physiologique')
@@ -38,22 +39,26 @@ def gui():
     label_cam.config(font=utility.font_title,bg=utility.color1)
     global cam
     cam = IntVar()
+    ###################For LINUX###################
     if utility.system == "linux" or utility.system == "linux2":
         global tab
         tab = utility.transWebcamString()
         if not len(tab)==0:
             for i in range (0,len(tab)):
                 print tab[i]
-                choix = Radiobutton(cam_frame, text=tab[i], variable=cam, value=i, command=None)
-                choix.config(font=utility.font_other,bg=utility.color1)
-                choix.pack(anchor=W)
+                choice = Radiobutton(cam_frame, text=tab[i], variable=cam, value=i, command=None)
+                choice.config(font=utility.font_other,bg=utility.color1)
+                choice.pack(anchor=W)
+        else :
+                error.webcam_error()
+    ###################For WINDOWS###################
     else :
         isok=True
         while isok:
             cap=cv2.VideoCapture(i)
-            choix = Radiobutton(cam_frame, text="Camera {0}".format(i-1), variable=cam, value=i-1, command=None)
-            choix.config(font=utility.font_other,bg=utility.color1)
-            choix.pack(anchor=W)
+            choice = Radiobutton(cam_frame, text="Camera {0}".format(i-1), variable=cam, value=i-1, command=None)
+            choice.config(font=utility.font_other,bg=utility.color1)
+            choice.pack(anchor=W)
             isok=cap.isOpened()
 
     camChoice=cam.get()

@@ -1,11 +1,19 @@
-from Tkinter import *
+import sys
 import utility
+import os
+from tkMessageBox import *
+##
+# 
+# @brief MessageBox to warn users their is no device
+##  
 def webcam_error():
-	error = Tk()
-	error.resizable(width=False,height=False)
-	error.title('Mesure physiologique')
-	error.geometry("%dx%d+0+0" % (400, 150))
-	error.config(bg=utility.color1)
-	error.bind('<Escape>', lambda e: error.quit())
-	label_error= Label(cam_frame, text="Select cam")
-	error.mainloop()
+	showerror('Webcam', "     No Device Detect\nPlease connect a webcam")
+	if utility.system == "linux" or utility.system == "linux2":
+		dirs = os.listdir('/dev/v4l/by-id')
+		print "List of device : "
+		for file in dirs:
+			print file ,"\n"
+	sys.exit()
+	
+def facedetect_error():
+	showinfo('Detection',"Nobody is detect")
