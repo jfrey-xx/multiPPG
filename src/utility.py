@@ -18,7 +18,7 @@ from sys import platform as system
 font_title=('arial', 12)#,'italic')
 font_other=('arial', 10)#,'bold')
 
-color1='#AED9FA'
+color1='#AED4FA'
 color_erreur ='#ff8282'
 
 ##

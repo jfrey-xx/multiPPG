@@ -43,10 +43,11 @@ def gui():
     if utility.system == "linux" or utility.system == "linux2":
         global tab
         tab = utility.transWebcamString()
-        if not len(tab)==0:
-            for i in range (0,len(tab)):
-                print tab[i]
-                choice = Radiobutton(cam_frame, text=tab[i], variable=cam, value=i, command=None)
+        length=len(tab)
+        if not length==0:
+            for i in range (0,length):
+                print i
+                choice = Radiobutton(cam_frame, text=tab[length-i-1], variable=cam, value=i, command=None)
                 choice.config(font=utility.font_other,bg=utility.color1)
                 choice.pack(anchor=W)
         else :
