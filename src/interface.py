@@ -20,7 +20,7 @@ def gui():
     root = Tk()
     root.resizable(width=False,height=False)
     root.title('Mesure physiologique')
-    root.geometry("%dx%d+0+0" % (400, 150))
+    root.wm_geometry("")
     root.config(bg=utility.color1)
     root.bind('<Escape>', lambda e: root.quit())
     label_frame = Frame(root, borderwidth=1)
@@ -55,12 +55,14 @@ def gui():
     ###################For WINDOWS###################
     else :
         isok=True
+        i=0
         while isok:
             cap=cv2.VideoCapture(i)
             choice = Radiobutton(cam_frame, text="Camera {0}".format(i-1), variable=cam, value=i-1, command=None)
             choice.config(font=utility.font_other,bg=utility.color1)
             choice.pack(anchor=W)
             isok=cap.isOpened()
+            i+=1
 
     camChoice=cam.get()
     button_frame =Frame(root,borderwidth=1)
