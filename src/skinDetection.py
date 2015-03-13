@@ -11,7 +11,13 @@ def detectSkin(frame):
     max_YCrCb = numpy.array([255,173,127],numpy.uint8)
 
     # conversion
+
+    min_YCrCb= cv.fromarray(min_YCrCb,True)
+    max_YCrCb= cv.fromarray(max_YCrCb,True)
+    print max_YCrCb
+    print min_YCrCb
     imageYCrCb = cv.CvtColor(frame,frame,cv2.COLOR_BGR2YCR_CB)
+    print imageYCrCb
     
     # 1 si le pixel est compris entre min et max
     # 0 sinon
