@@ -1,7 +1,7 @@
 #from matplotlib.pylab import *
 import numpy
 import dtcwt
-
+## SI face ==0 on incrémente un i si i ==10 alors envoie message erreur sinon on réinitialse i à 0
 def ppgFunction(r, g, b, face, frame):
     r[0] = r[1]
     g[0] = g[1]

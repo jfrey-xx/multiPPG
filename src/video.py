@@ -20,8 +20,10 @@ def detect_faces(frame):
     storage = cv.CreateMemStorage()
     cascade = cv.Load(HAAR_CASCADE_PATH)
     faces = []
-    detected = cv.HaarDetectObjects(frame, cascade, storage, 1.2, 2, \
-                                    cv.CV_HAAR_DO_CANNY_PRUNING, (100,100))
+    try:
+        detected = cv.HaarDetectObjects(frame, cascade, storage, 1.2, 2,cv.CV_HAAR_DO_CANNY_PRUNING, (100,100))
+    except cv.error:
+        unknown_error()
     if detected:
         for (x,y,w,h),n in detected:
             faces.append((x,y,w,h))
@@ -39,7 +41,6 @@ def detect_faces(frame):
 #  
 def start(e,cam):
     WINDOW_NAME="Camera {0}".format(cam+1)
-    print WINDOW_NAME
     global cap
     cap = cv.CaptureFromCAM(cam)
     cv.NamedWindow(WINDOW_NAME, cv.CV_WINDOW_AUTOSIZE)
@@ -50,17 +51,17 @@ def start(e,cam):
         try:
             frame = cv.QueryFrame(cap)
             faces = detect_faces(frame)
-            skin = skinDetection.detectSkin(frame)
-            nbface = len(faces) #Pour les calculs a venir
+            # nbface = len(faces) #Pour les calculs a venir
             cv.ShowImage(WINDOW_NAME, frame)
             key = cv.WaitKey(20) & 0xFF
             if key == 27: # 27 = ESC
                 cv.DestroyWindow(WINDOW_NAME)
                 e.clear()
                 break
-            if key == 83 :
+            if key == 83 : # 83 = s
+                skin = skinDetection.detectSkin(frame)
                 heartBeatPPG.ppgFunction(r, g, b, face, frame)
-        except cv.CaptureFromCAM as e:
+        except IndexError:
             error.webcam_error()
 
 def start_proc(cam):

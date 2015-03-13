@@ -14,6 +14,9 @@ def webcam_error():
 		for file in dirs:
 			print file ,"\n"
 	sys.exit()
-	
+
+def unknown_error():
+	showerror('Error', "An Error Occured please try again")
+
 def facedetect_error():
 	showinfo('Detection',"Nobody is detect")
