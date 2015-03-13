@@ -1,8 +1,10 @@
 import multiprocessing
 import error
 import sys
-import cv2
+# import cv2
 import cv
+import heartBeatPPG
+import skinDetection
 
 HAAR_CASCADE_PATH = "../sources/haarcascades/haarcascade_frontalface_alt.xml"
 e = multiprocessing.Event()
@@ -41,10 +43,14 @@ def start(e,cam):
     global cap
     cap = cv.CaptureFromCAM(cam)
     cv.NamedWindow(WINDOW_NAME, cv.CV_WINDOW_AUTOSIZE)
+    r = [0, 0]
+    g = [0, 0]
+    b = [0, 0]
     while(True):
         try:
             frame = cv.QueryFrame(cap)
             faces = detect_faces(frame)
+            skin = skinDetection.detectSkin(frame)
             nbface = len(faces) #Pour les calculs a venir
             cv.ShowImage(WINDOW_NAME, frame)
             key = cv.WaitKey(20) & 0xFF
@@ -52,6 +58,8 @@ def start(e,cam):
                 cv.DestroyWindow(WINDOW_NAME)
                 e.clear()
                 break
+            if key == 83 :
+                heartBeatPPG.ppgFunction(r, g, b, face, frame)
         except cv.CaptureFromCAM as e:
             error.webcam_error()
 

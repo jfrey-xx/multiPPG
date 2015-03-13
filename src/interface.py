@@ -27,10 +27,13 @@ def gui():
     label_frame.config(bg=utility.color1)
     label_frame.pack(side='top')
 
-
+####################################Title ####################################
     escape_label = Label(label_frame, text="Press ESC to close")
-    escape_label.config(font=utility.font_title,bg=utility.color1)
+    escape_label.config(font=utility.font_other,bg=utility.color1)
     escape_label.pack(anchor=N)
+
+####################################Select CAM ####################################
+
     cam_frame = Frame(root,borderwidth=1)
     cam_frame.config(bg=utility.color1)
     cam_frame.pack(side='left')
@@ -39,7 +42,7 @@ def gui():
     label_cam.config(font=utility.font_title,bg=utility.color1)
     global cam
     cam = IntVar()
-    ###################For LINUX###################
+    #------------------- For LINUX -------------------
     if utility.system == "linux" or utility.system == "linux2":
         global tab
         tab = utility.transWebcamString()
@@ -52,7 +55,7 @@ def gui():
                 choice.pack(anchor=W)
         else :
                 error.webcam_error()
-    ###################For WINDOWS###################
+    #------------------- For Other -------------------
     else :
         isok=True
         i=0
@@ -65,10 +68,28 @@ def gui():
             i+=1
 
     camChoice=cam.get()
+
+####################################Select Algorithm ####################################
+    global algo
+    algo = IntVar()
+
+    algo_frame= Frame(root,borderwidth=1)
+    algo_frame.config(bg=utility.color1)
+    algo_frame.pack(anchor=E)
+
+    algo_label = Label(algo_frame,text="Select an algorithm")
+    algo_label.config(font=utility.font_title,bg=utility.color1)
+    algo_label.pack(anchor=W)
+
+    algochoice=Radiobutton(algo_frame, text="PPG", variable=algo, value=0, command=None)
+    algochoice.config(bg=utility.color1)
+    algochoice.pack(anchor=W)
+
+#################################### Button START/STOP ####################################
+
     button_frame =Frame(root,borderwidth=1)
     button_frame.config(bg=utility.color1)
-    button_frame.pack(side='right')
-
+    button_frame.pack(anchor=SW)
 
     startbutton=Button(button_frame,width=10,height=1,text='Start Video',command=envoiCam)
     stopbutton=Button(button_frame,width=10,height=1,text='Stop', command=video.stop)
