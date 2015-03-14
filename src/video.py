@@ -1,10 +1,11 @@
 import multiprocessing
 import error
 import sys
-# import cv2
+import cv2
 import cv
 import heartBeatPPG
 import numpy
+import interface
 
 HAAR_CASCADE_PATH = "../sources/haarcascades/haarcascade_frontalface_alt.xml"
 e = multiprocessing.Event()
@@ -23,7 +24,7 @@ def detect_faces(frame):
     try:
         detected = cv.HaarDetectObjects(frame, cascade, storage, 1.2, 2,cv.CV_HAAR_DO_CANNY_PRUNING, (100,100))
     except cv.error:
-        unknown_error()
+        error.unknown_error()
     if detected:
         for (x,y,w,h),n in detected:
             faces.append((x,y,w,h))
@@ -72,8 +73,9 @@ def detectSkin(frame):
 # @brief The fonction start allows the begining of the capture by OpenCV
 # @param cam The number of the webcam must be used
 #  
-def start(e,cam):
-    WINDOW_NAME="Camera {0}".format(cam+1)
+def start(e,cam,tab,algo):
+    print algo
+    WINDOW_NAME="Camera {0}".format(tab[cam])
     global cap
     cap = cv.CaptureFromCAM(cam)
     cv.NamedWindow(WINDOW_NAME, cv.CV_WINDOW_AUTOSIZE)
@@ -86,24 +88,36 @@ def start(e,cam):
             faces = detect_faces(frame)
             # nbface = len(faces) #Pour les calculs a venir
             cv.ShowImage(WINDOW_NAME, frame)
-            skin = detectSkin(frame)
+
+######################## Algo CHOICE #########################
+            if algo == 0:
+                print "PPG"
+                toto='coucou'
+                sendToInterface(toto)
+                # skin = detectSkin(frame)
+                # heartBeatPPG.ppgFunction(r, g, b, face, frame)
+            if algo == 1:
+                print "Eularian"
+
+######################## Wait KEY #########################
             key = cv.WaitKey(20) & 0xFF
             if key == 27: # 27 = ESC
                 cv.DestroyWindow(WINDOW_NAME)
                 e.clear()
                 break
-            if key == 115 : # 115 = s
-                heartBeatPPG.ppgFunction(r, g, b, face, frame)
-        except cv.error:
+        except cv.error: # V4L error ... [TODO]
             error.webcam_error()
 
-def start_proc(cam):
+def start_proc(cam,tab,algo):
     global p
-    p = multiprocessing.Process(target=start, args=(e,cam))
+    p = multiprocessing.Process(target=start, args=(e,cam,tab,algo))
     p.start()
 
 
 def stop():
+    cv.DestroyWindow(WINDOW_NAME)
     e.set()
     p.join()
     
+def sendToInterface(test):
+    interface.actualiseLabel(test)
