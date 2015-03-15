@@ -6,7 +6,7 @@
 \usepackage{setspace}
 \usepackage{graphicx}
 
-\title{Cahier des besoins \\-\\ Mesure du rythme cardiaque à partir du flux vidéo de la Kinect 2}
+\title{PDP \\ - \\ Mesure du rythme cardiaque à partir du flux vidéo de la Kinect 2}
 
 \author{Hereiti \bsc{Hatitio} - Anta \bsc{Mbaye} - Maxime \bsc{Vincent} - Jean-Baptiste \bsc{Rey}}
 
@@ -15,6 +15,8 @@
 \newpage
 \tableofcontents
 \newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Cahier des besoins %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\part{Cahier des Besoins}
 
 \section*{Introduction}
 
@@ -165,6 +167,121 @@ De plus, le tracking est plus performant avec une webcam de meilleure qualité.
 \subsection{Diagramme de Gantt}
 \includegraphics[scale=0.40]{Gantt.png}
 La distribution des tâches n'a pas encore été décidée avec précision.\\ Elle sera effectuée au cours de la phase de conception.
+\newpage
 
 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Architecture %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+\part*{Architecture}
+\setcounter{section}{0}
+\section{Modules}
+
+\subsection{Détection périphériques}
+Ce module liste les différents périphériques utilisables. Il permet à l'utilisateur d'en sélectionner un.
+
+\subsection{Sélection flux vidéo}
+
+Ce module permet de sélectionner le flux (RGB, IR ou autres) pour appliquer le tracking. Le flux sera ensuite affiché dans l'IHM.
+
+\subsection{Choix du calcul}
+Ce module permet la sélection du type de mesure physiologique. Dans notre cas le rythme cardiaque, avec possibilité de rajouter le calcul du rythme respiratoire ou autre.
+
+\subsection{Détection}
+A l'aide d'OpenCV, ce module permet de détecter la zone de traitement suivant un choix de l'utilisateur, puis de dessiner le cadre de cette zone.
+
+\subsection{Visage}
+Ce module permet d'isoler un visage à partir du flux vidéo.
+
+\subsection{Front}
+Ce module isole le front à partir de la zone calculée par le module \textit{Visage}
+
+\subsection{Zone mouvement}
+
+Ce module délimite la zone de mouvement possible sans perte de tracking. Il identifie également les utilisateurs par un ID numérique. Si un utilisateur sort de son cadre, le tracking est perdu, il n'est repris que lorsqu'une nouvelle zone de traitement est détectée.
+\vspace*{-0.5in}
+\subsection{Calcul}
+
+Ce module effectue le calcul sélectionné dans \textit{Choix du calcul}. Il mesure en boucle le rythme cardiaque tant qu'une zone de traitement est valide.
+Le même algorithme est appliqué sur chaque sujet détecté.\newline
+\textit{pyfftw} est utilisé pour implémenter l'algorithme basé sur les transformés de Fourier.
+
+\subsection{Traitement résultat}
+Ce module récupère les résultats fournis par \textit{Calcul} et les rend compatible avec les modules \textit{Update\_Graphique} et \textit{Réseau}.
+
+\subsection{Réseau}
+Ce module encapsule les données de \textit{Traitement résultat} au sein de trames TCP prêtes à être envoyées vers un serveur client.
+Il utilisera des protocoles de types OSC et LSL.
+
+\subsection{Avertissements}
+En cas d'erreurs produites par les différents modules précédents, un message est envoyé au module \textit{Update\_graphique} qui met à jour l'IHM en spécifiant l'erreur.
+
+\subsection{Update\_graphique}
+Ce module correspond à un \textit{Listener}. Il permet de mettre à jour les différents éléments de l'interface graphique.
+
+\subsection{Graphique}
+Ce module affiche les différents éléments composant de l'IHM.
+
+\section{Test}
+Ce module compare les données calculées via le flux vidéo avec celles d'un capteur de contact (capteur Arduino).
+
+\section{Framework}
+\textit{OpenCV} et \textit{pyfftw} sont des bibliothèques qui sont utilisées respectivement par les modules \textit{Détection} et \textit{Calcul}.
+
+\newpage
+\vspace*{-1.6in}
+\vspace*{-\the\hoffset}
+\thispagestyle{empty}
+\includegraphics[scale=0.4,angle=90]{archi2.jpeg}
+\vspace*{-1in}
+\vspace*{-\the\hoffset}
+
+\section{Légendes}
+\noindent
+\includegraphics[scale=0.5]{bleu.png} : Modules implémentant les besoins fonctionnels\newline
+\includegraphics[scale=0.5]{vert.png} : Modules d'affichage graphique\newline
+\includegraphics[scale=0.5]{orange.png} : Flux vidéo\newline
+\includegraphics[scale=0.5]{rouge.png} : Frameworks\newline
+\includegraphics[scale=0.5]{rose.png} :  Module de traitement des erreurs\newline
+\includegraphics[scale=0.5]{fleche.png} :  Transitions\newline
+\includegraphics[scale=0.5]{fleche_pointille.png} :  Implémentation\newline
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Bibliographie %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\part{Eléments bibliographiques}
+\begin{itemize}
+
+\item La documentation \cite{Kinect} Microsoft sur l'appareil Kinect explique le fonctionnement de la machine et l'utilisation des bibliothèques pour programmer avec. Cela nous sera donc utile lorsque nous serons dans la phase développement de notre projet.
+\newline
+\item L'article \cite{Patel14} présente l'utilisation d'un dispositif permettant de détecter une attaque cardiaque sur un patient sans aucun spécialiste, mais aussi d'appeler les secours. L'appareil Kinect est utilisé pour la détection du rythme cardiaque du patient.
+\newline
+
+\item L'article \cite{Ufuk} propose une méthode d'implémentation de mesure de rythme cardiaque à partir d'enregistrements vidéos. A un instant donné, on détecte le visage de l'individu, puis la peau grâce au flux YCbCr. On obtient les signaux PPG en utilisant deux vecteurs de l'espace RGB. Après avoir traité les signaux (filtre passe-bande, transformée de Fourier, …) de chaque fenêtre de la vidéo, on obtient la pulsation cardiaque. Cette article nous propose donc une des orientations possibles que peut prendre notre projet afin de réaliser nos objectifs.
+\newline
+\item L'article \cite{Cenn} Heart rate monitoring via remote photoplethysmography with motion artifacts reduction montre un système photopléthysmographique qui fonctionne sans contact avec la peau. Les mesures sont fait en temps réel et calcule la fréquence cardiaque.
+\newpage
+\item Cette référence\cite{Wri03} traite l'Open Sound Control dans toute sa globalité. Les archives de l'université de Berkeley  présentent les domaines d'application de l'OSC, ses spécifications, les langages de programmation avec lesquels on peut l'utiliser. Ce protocole nous sera utile pour synthétiser le son des battements du cœur et les transférer. Dans la référence \cite{Wri03}, nous pouvons constater l'utilisation d'une architecture client/serveur pour l'envoi et la réception des données. 
+\item Cet article \cite{Bous} présente les méthodes et les résultats d'un projet consistant à analyser les signaux d'un flux vidéo capturé par une webcam dans le but d'évaluer le rythme cardiaque d'un sujet en temps réel. Cette réalisation inspire notre projet de programmation car l'article y décrit la mise en place des tests expérimentaux, les algorithmes mis en place sur un ordinateur de milieu de gamme pour capturer l'arythmie sinusale respiratoire entraînant la variation de la fréquence cardiaque, en tenant compte des inconvénients induits par la lumière et les mouvements des objets, ainsi que les résultats corrélés avec des capteurs de contact.
+Utilisant Kinect, un appareil plus perfectionné qu'une webcam, cet article pourra nous servir de base solide pour obtenir des résultats précis.
+\newline
+\item L'article \cite{Kran} décrit des méthodes de mesure de pulsation cardiaque, dont la photopléthysmographie. Cette dernière repose sur l'analyse d'un visage d'une ou plusieurs personnes (au repos ou en mouvement lent) à partir d'un fichier vidéo. On obtient des variations du signal pléthysmographique grâce aux flux RGB.
+\newline
+\item L'article \cite{Verkr} est intéressant dans l'analyse des résultats de photopléthysmographie : détection et modulation de la pulsation cardiaque, cartographie d'amplitude d'impulsion et cartographie de phase, propagation des ondes cardio-vasculaires.
+\newline
+\item La référence \cite{Sch} présente dans sa globalité une description du LSL, des API pouvant être utilisées. Elle décrit des caractéristiques de fiabilité implémentées par les bibliothèques ainsi que des explications détaillées sur la synchronisation du temps, les formats des fichiers fournis ou conseillés. Elle présente également une liste des codes que l'on pourra utiliser avec par exemple du python, du C++, du C\# ou du Java. 
+Nous avons eu besoin de références supplémentaires pour avoir un aperçu plus large sur la documentation et les conseils de programmation sur ce protocole. La première version du LSL a été écrite au Swartz Center for Computational Neuroscience. Nous sommes donc allés chercher la documentation de ces derniers et avons trouvé des cours, des tutoriels sur l'utilisation du LSL. 
+\newpage
+\item Cette thèse \cite{Wu} décrit la méthode de l'Eularian Video Processing. Cette technique prend une séquence vidéo standard en entrée, et applique une décomposition spatiale, suivie d'un filtrage temporel sur les images. Les signaux résultants peuvent alors être amplifiés visuellement afin de révéler des informations qui ne peuvent être observées à l'oeil nu.
+L'Eularian Video Processing peut être exécuté en temps réel, tenir compte des mouvements et de la lumière, pour extraire des signaux vitaux sans contact, comme notamment le rythme cardiaque d'un sujet.
+Cette thèse peut donc nous servir dans la réalisation de notre projet de programmation, puisqu'elle s'inscrit dans les mêmes objectifs et y décrit les méthodes utilisées.
+\newline
+\item Cet article \cite{Tara} montre l'avancée des recherches sur les technologies permettant de surveiller les signes vitaux des patients sans qu'il y ait d'électrodes ou de capteurs placés sur eux. 
+L'analyse vidéo des couleurs sur le visage du patient permet d'obtenir ces valeurs. Ceci est en lien avec notre projet.
+\end{itemize}
+
+\bibliography{biblio}
 \end{document}
