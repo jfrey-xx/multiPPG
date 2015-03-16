@@ -55,15 +55,15 @@ def detectSkin(frame):
 
     min_YCrCb= cv.fromarray(min_YCrCb,True)
     max_YCrCb= cv.fromarray(max_YCrCb,True)
-    print max_YCrCb
-    print min_YCrCb
+    print "[Detect skin] Max : ",max_YCrCb
+    print "[Detect skin] Min : ",min_YCrCb
     imageYCrCb = cv.CvtColor(frame,frame,cv2.COLOR_BGR2YCR_CB)
-    print imageYCrCb
+    print "[Detect skin] image : ",imageYCrCb
     
     # 1 si le pixel est compris entre min et max
     # 0 sinon
     skin = cv.InRange(imageYCrCb,min_YCrCb,max_YCrCb,imageYCrCb)
-
+    print "[Detect skin] skin : ",skin
     return skin
 
 
@@ -74,7 +74,6 @@ def detectSkin(frame):
 # @param cam The number of the webcam must be used
 #  
 def start(e,cam,tab,algo):
-    print algo
     WINDOW_NAME="Camera {0}".format(tab[cam])
     global cap
     cap = cv.CaptureFromCAM(cam)
@@ -91,13 +90,13 @@ def start(e,cam,tab,algo):
 
 ######################## Algo CHOICE #########################
             if algo == 0:
-                print "PPG"
+                print "Algo : PPG"
                 toto='coucou'
                 sendToInterface(toto)
                 # skin = detectSkin(frame)
                 # heartBeatPPG.ppgFunction(r, g, b, face, frame)
             if algo == 1:
-                print "Eularian"
+                print "Algo : Eularian"
 
 ######################## Wait KEY #########################
             key = cv.WaitKey(20) & 0xFF
@@ -105,7 +104,7 @@ def start(e,cam,tab,algo):
                 cv.DestroyWindow(WINDOW_NAME)
                 e.clear()
                 break
-        except cv.error: # V4L error ... [TODO]
+        except Exception : # V4L error ... [TODO] VIDIOC_DQBUF
             error.webcam_error()
 
 def start_proc(cam,tab,algo):

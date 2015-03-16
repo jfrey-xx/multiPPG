@@ -9,10 +9,14 @@ from tkMessageBox import *
 def webcam_error():
 	showerror('Webcam', "     No Device Detect\nPlease connect a webcam")
 	if utility.system == "linux" or utility.system == "linux2":
-		dirs = os.listdir('/dev/v4l/by-id')
-		print "List of device : "
-		for file in dirs:
-			print file ,"\n"
+		try :
+			dirs = os.listdir('/dev/v4l/by-id')
+			print "List of device : "
+			for file in dirs:
+				print file ,"\n"
+		except OSError :
+			sys.exit()
+
 	sys.exit()
 
 def unknown_error():
