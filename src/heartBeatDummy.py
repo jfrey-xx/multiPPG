@@ -1,27 +1,48 @@
 
 import video # boo! import within an import! no choice if I want to change little
-import cv
+import cv, cv2
+import numpy
 
 # one static variable to remember last faces in case of tracking disruption, one dot by default
 # TODO: should be handled by video.detect_faces
 last_faces = [0,0,1,1]
 
+# we don't get any info about webcam yet, so we'll share one debug window per iteration of the algo for each face
+DUMMY_WINDOW_NAME="dummy_debug"
+
 def process(frame):
   global last_faces
-  print "got it"
+  # TODO: use filter ala One Euro Filter to stabilize tracking
   faces = video.detect_faces(frame)
   # by default: greet color for faces
   fitFace_color = (0, 255, 0)
-  print faces
   if faces != []:
     last_faces = faces
   else:
     # "red" flag
     fitFace_color = (0, 255, 255)
-    
+  # we be filled with mean color of each face
+  means = []
+  # one ID for each face
+  faceN = 0
   # Now we can play with faces color!
   for (x,y,w,h) in last_faces:
     # narrower rectangle for effective face, show in green
     fitFace_start = (x+w/4, y+h/6)
     fitFace_stop =  (x+3*w/4, y+5*h/6)
     cv.Rectangle(frame, fitFace_start, fitFace_stop, fitFace_color, 2)
+    
+    # duplicate region of interest and sho it
+    # FIXME: check that len(start:stop) > 0
+    roi = frame[fitFace_start[1]:fitFace_stop[1], fitFace_start[0]:fitFace_stop[0]]
+    cv.ShowImage(DUMMY_WINDOW_NAME+"_"+str(faceN), roi)
+    
+    # Compute average color
+    # wow, lot's of modules and functions to convert roi to matrix to numpy array to get mean color
+    meanColor = cv2.mean(numpy.asarray(cv.GetMat(roi)))
+    means.append(meanColor)
+    
+    faceN = faceN+1
+  # next step: return as a value and make something out of it
+  print means
+
