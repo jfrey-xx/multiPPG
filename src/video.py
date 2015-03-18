@@ -3,7 +3,7 @@ import error
 import sys
 import cv2
 import cv
-import heartBeatPPG
+import heartBeatPPG, heartBeatDummy
 import numpy
 import interface
 
@@ -82,30 +82,38 @@ def start(e,cam,tab,algo):
     g = [0, 0]
     b = [0, 0]
     while(True):
+        # careful to what is caught, block to big could occult genuine bugs (I'm not saying I mispelled a variable, of course not!)
         try:
             frame = cv.QueryFrame(cap)
-            faces = detect_faces(frame)
             # nbface = len(faces) #Pour les calculs a venir
-            cv.ShowImage(WINDOW_NAME, frame)
-
-######################## Algo CHOICE #########################
-            if algo == 0:
-                print "Algo : PPG"
-                toto='coucou'
-                sendToInterface(toto)
-                # skin = detectSkin(frame)
-                # heartBeatPPG.ppgFunction(r, g, b, face, frame)
-            if algo == 1:
-                print "Algo : Eularian"
-
-######################## Wait KEY #########################
-            key = cv.WaitKey(20) & 0xFF
-            if key == 27: # 27 = ESC
-                cv.DestroyWindow(WINDOW_NAME)
-                e.clear()
-                break
         except Exception : # V4L error ... [TODO] VIDIOC_DQBUF
             error.webcam_error()
+            break
+
+######################## Algo CHOICE #########################
+        if algo == 0:
+            print "Algo : PPG"
+            toto='coucou'
+            sendToInterface(toto)
+            # skin = detectSkin(frame)
+            # heartBeatPPG.ppgFunction(r, g, b, face, frame)
+        if algo == 1:
+            print "Algo : Eularian"
+        if algo == 2:
+            print "Algo : Dummy"
+            #sendToInterface("dummy") # what 4?
+            heartBeatDummy.process(frame)
+            
+        # delay when we show frame so that algo could add information
+        cv.ShowImage(WINDOW_NAME, frame)
+
+######################## Wait KEY #########################
+        key = cv.WaitKey(20) & 0xFF
+        if key == 27: # 27 = ESC
+            cv.DestroyWindow(WINDOW_NAME)
+            e.clear()
+            break
+
 
 def start_proc(cam,tab,algo):
     global p
