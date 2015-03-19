@@ -5,7 +5,7 @@ import numpy
 
 # one static variable to remember last faces in case of tracking disruption, one dot by default
 # TODO: should be handled by video.detect_faces
-last_faces = [0,0,1,1]
+last_faces = [[0,0,128,128]]
 
 # we don't get any info about webcam yet, so we'll share one debug window per iteration of the algo for each face
 DUMMY_WINDOW_NAME="dummy_debug"
@@ -44,5 +44,5 @@ def process(frame):
     
     faceN = faceN+1
   # next step: return as a value and make something out of it
-  print means
+  return means
 
