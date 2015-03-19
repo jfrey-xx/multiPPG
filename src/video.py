@@ -12,11 +12,15 @@ import sample_rate
 HAAR_CASCADE_PATH = "../sources/haarcascades/haarcascade_frontalface_alt.xml"
 e = multiprocessing.Event()
 p = None
-
+cascade = cv2.CascadeClassifier(HAAR_CASCADE_PATH)
 
 # number of values sent to streamer, ie number of persons x RGBA ... bold move to say only one at the moment
 LSL_NB_CHANNELS = 4
-LSL_SAMPLE_RATE = 14 # 30 FPS... maybe not, FIXME: find a reliable way to discover webcam FPS
+LSL_SAMPLE_RATE = 30 # 30 FPS... maybe not, FIXME: find a reliable way to discover webcam FPS
+
+# set "1" to track face every frame, 2 every two frames and so on
+TRACKING_RATE=5
+frame_count = 0
 
 ##
  # @brief detect_face use the cascade to calculate the square of the faces
@@ -25,20 +29,24 @@ LSL_SAMPLE_RATE = 14 # 30 FPS... maybe not, FIXME: find a reliable way to discov
  # The nomber of square depend of the number of users see by the webcam
  #  
 def detect_faces(frame):
-    storage = cv.CreateMemStorage()
-    cascade = cv.Load(HAAR_CASCADE_PATH)
-    faces = []
-    try:
-        detected = cv.HaarDetectObjects(frame, cascade, storage, 1.2, 2,cv.CV_HAAR_DO_CANNY_PRUNING, (100,100))
-    except cv.error:
-        error.unknown_error()
-    if detected:
-        for (x,y,w,h),n in detected:
-            faces.append((x,y,w,h))
-    # lenght = len(faces) # Nomber of faces on camera
-    for (x,y,w,h) in faces:
-        cv.Rectangle(frame, (x,y), (x+w,y+h), 255)
-        cv.Rectangle(frame, (x+w/2, y+h/6), (x+w/2, y+h/6), (0, 0, 255), 2)
+    global frame_count
+    faces = ()
+    if not frame_count % TRACKING_RATE:
+        # convert frame to cv2 format, and to B&W to speedup processsing (this cv/cv2 mix drives me crazy)
+        # FIXME: prone to bug if webcam already B&W
+        gray = cv2.cvtColor(numpy.array(cv.GetMat(frame)), cv2.COLOR_BGR2GRAY)
+
+        try:
+            # NB: CV_HAAR_SCALE_IMAGE more optimized than CV_HAAR_DO_CANNY_PRUNING
+            faces = cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=2, flags=cv.CV_HAAR_SCALE_IMAGE, minSize=(100, 100))
+        except cv.error:
+            error.unknown_error()
+
+        # lenght = len(faces) # Nomber of faces on camera
+        for (x,y,w,h) in faces:
+            cv.Rectangle(frame, (x,y), (x+w,y+h), 255)
+            cv.Rectangle(frame, (x+w/2, y+h/6), (x+w/2, y+h/6), (0, 0, 255), 2)
+    frame_count = frame_count + 1
     return faces
 
 # def getNbFaces():

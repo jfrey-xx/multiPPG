@@ -16,7 +16,7 @@ def process(frame):
   faces = video.detect_faces(frame)
   # by default: greet color for faces
   fitFace_color = (0, 255, 0)
-  if faces != []:
+  if faces != ():
     last_faces = faces
   else:
     # "red" flag
