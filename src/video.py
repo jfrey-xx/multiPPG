@@ -7,6 +7,7 @@ import heartBeatPPG, heartBeatDummy
 import numpy
 import interface
 import streamerLSL
+import sample_rate
 
 HAAR_CASCADE_PATH = "../sources/haarcascades/haarcascade_frontalface_alt.xml"
 e = multiprocessing.Event()
@@ -15,7 +16,7 @@ p = None
 
 # number of values sent to streamer, ie number of persons x RGBA ... bold move to say only one at the moment
 LSL_NB_CHANNELS = 4
-LSL_SAMPLE_RATE = 30 # 30 FPS... maybe not, FIXME: find a reliable way to discover webcam FPS
+LSL_SAMPLE_RATE = 14 # 30 FPS... maybe not, FIXME: find a reliable way to discover webcam FPS
 
 ##
  # @brief detect_face use the cascade to calculate the square of the faces
@@ -88,12 +89,17 @@ def start(e,cam,tab,algo):
     g = [0, 0]
     b = [0, 0]
 
+    # Init network streamer
     streamer = streamerLSL.StreamerLSL(LSL_NB_CHANNELS,LSL_SAMPLE_RATE)
+
+    # Init the thread that will monitor FPS
+    monit = sample_rate.PluginSampleRate()
+    monit.activate()
 
     while(True):
         
-        # init streamed value with default
-        values = [0] * LSL_NB_CHANNELS
+        # init streamed value with default (make a tuple out of it, as with dummy)
+        values = [0] * LSL_NB_CHANNELS,
 
         # careful to what is caught, block to big could occult genuine bugs (I'm not saying I mispelled a variable, of course not!)
         try:
@@ -113,12 +119,15 @@ def start(e,cam,tab,algo):
         if algo == 1:
             print "Algo : Eularian"
         if algo == 2:
-            print "Algo : Dummy"
+            #print "Algo : Dummy"
             #sendToInterface("dummy") # what 4?
             values = heartBeatDummy.process(frame)
         
         # TODO: adapt values size to NB_CHANNELS
         streamer(values)
+
+        # compute FPS
+        monit()
 
         # delay when we show frame so that algo could add information
         cv.ShowImage(WINDOW_NAME, frame)
