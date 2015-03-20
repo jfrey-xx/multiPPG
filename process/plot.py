@@ -21,6 +21,7 @@ class Plotter(Thread):
     self.polling_interval = polling_interval
     self.sample_rate = int(sample_rate)
     self.queue_size = self.sample_rate*window_length
+    self.title = title
     
     # fifo for temporal filter
     self.values =  [0]*self.queue_size
@@ -37,7 +38,7 @@ class Plotter(Thread):
     
     
   def run(self):
-    canvas = scene.SceneCanvas(size=(WINDOW_WIDTH, WINDOW_HEIGHT), keys='interactive')
+    canvas = scene.SceneCanvas(size=(WINDOW_WIDTH, WINDOW_HEIGHT), keys='interactive', title=self.title)
 
     N = self.queue_size
     
@@ -46,14 +47,7 @@ class Plotter(Thread):
     self.line = scene.visuals.Line(pos=self.pos, parent=canvas.scene)
     canvas.show()
     canvas.app.run()
-    
 
-
-    while True:
-      print "test"
-      pass
-      
-        
   def push_value(self, value):
       """
       One new value for the plot
