@@ -5,11 +5,31 @@ import numpy as np
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
 
-class Plotter(Thread):
+class PlotLaunch(Thread):
   """
-  Use threads to update regularely a data plot
-  FIXME: buggy because of Tkinter (on close and one plot only ??)
+  One thread to launch vispy app, try not to instanciate this class twice...
   """
+  init = False
+  def __init__(self):
+    Thread.__init__(self)
+    global init
+    assert(PlotLaunch.init == False)
+    PlotLaunch.init = True
+    self.daemon = True
+    self.start()
+    
+  def run(self):
+    for canvas in Plotter.canvass:
+      canvas.show()
+    app.run()
+
+class Plotter():
+  """
+  Use singleton threads to update regularely a data plot
+  """
+  
+  # canvas list for main thread
+  canvass = []
   
   def __init__(self, sample_rate, window_length=1, polling_interval=0.1, title="plot"):
     """
@@ -17,7 +37,6 @@ class Plotter(Thread):
     window_length: time length of plot (in seconds)
     polling_interval: will redraw plot every XX seconds
     """
-    Thread.__init__(self)
     self.polling_interval = polling_interval
     self.sample_rate = int(sample_rate)
     self.queue_size = self.sample_rate*window_length
@@ -25,28 +44,17 @@ class Plotter(Thread):
     
     # fifo for temporal filter
     self.values =  [0]*self.queue_size
-    # for plot: X
-    self.x=range(0,self.queue_size)
-
-    self.daemon = True
     
-    self.line = None
+    # init canvas, add to main list
+    self.canvas = scene.SceneCanvas(size=(WINDOW_WIDTH, WINDOW_HEIGHT), keys='interactive', title=self.title)
+    global canvass
+    Plotter.canvass.append(self.canvas)
+    
+    # init content: one line
     self.pos = np.empty((self.queue_size, 2), np.float32)
-    #self.canvas = vispy.plot.plot([1, 6, 2, 4, 3, 8, 4, 6, 5, 2])
-    #self.canvas.line =  vispy.scene.visuals.LinePlot([1, 6, 2, 4, 3, 8, 4, 6, 5, 2])
-    self.start()
-    
-    
-  def run(self):
-    canvas = scene.SceneCanvas(size=(WINDOW_WIDTH, WINDOW_HEIGHT), keys='interactive', title=self.title)
-
-    N = self.queue_size
-    
-    self.pos[:, 0] = np.linspace(0, WINDOW_WIDTH, N)
-    self.pos[:, 1] = np.random.normal(scale=50, loc=30, size=N)
-    self.line = scene.visuals.Line(pos=self.pos, parent=canvas.scene)
-    canvas.show()
-    canvas.app.run()
+    self.pos[:, 0] = np.linspace(0, WINDOW_WIDTH, self.queue_size)
+    self.pos[:, 1] = np.random.normal(scale=50, loc=30, size=self.queue_size)
+    self.line = scene.visuals.Line(pos=self.pos, parent=self.canvas.scene)
 
   def push_value(self, value):
       """
@@ -69,7 +77,7 @@ class Plotter(Thread):
         
         self.pos[:, 1] = values_np
         self.line.set_data(self.pos)
-        #self.line.update()
+        
 
         
     

@@ -9,6 +9,8 @@ if __name__ == "__main__":
     
   harry = plot.Plotter(reader.getSamplingRate(0))
   
+  plot.PlotLaunch()
+  
   while True:
     sample, timestamp = reader()
     print timestamp, sample
@@ -17,4 +19,3 @@ if __name__ == "__main__":
     if len(sample) > 2:
       green_value = sample[1]
     harry.push_value(green_value)
-    
