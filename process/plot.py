@@ -1,8 +1,9 @@
-import sys; sys.path.append('../lib/mtKinter') # help python find mtKinter relative to this example program
-import mtTkinter as Tkinter # bypass some Tkinter internals to make it complient with threads
-import matplotlib.pyplot as plt 
+from vispy import app, scene
 from threading import Thread
+import numpy as np
 
+WINDOW_WIDTH = 800
+WINDOW_HEIGHT = 600
 
 class Plotter(Thread):
   """
@@ -10,7 +11,7 @@ class Plotter(Thread):
   FIXME: buggy because of Tkinter (on close and one plot only ??)
   """
   
-  def __init__(self, sample_rate, window_length=1, polling_interval=0.1):
+  def __init__(self, sample_rate, window_length=1, polling_interval=0.1, title="plot"):
     """
     sample_rate: at which rate values will be sent (in Hz). NB: will be cast to int!
     window_length: time length of plot (in seconds)
@@ -27,33 +28,31 @@ class Plotter(Thread):
     self.x=range(0,self.queue_size)
 
     self.daemon = True
-    self.running = True
+    
+    self.line = None
+    self.pos = np.empty((self.queue_size, 2), np.float32)
+    #self.canvas = vispy.plot.plot([1, 6, 2, 4, 3, 8, 4, 6, 5, 2])
+    #self.canvas.line =  vispy.scene.visuals.LinePlot([1, 6, 2, 4, 3, 8, 4, 6, 5, 2])
     self.start()
     
     
   def run(self):
-      # initialize figure
-      plt.figure() 
-      ln, = plt.plot(self.values)
-      plt.ion()
-      plt.show()
+    canvas = scene.SceneCanvas(size=(WINDOW_WIDTH, WINDOW_HEIGHT), keys='interactive')
 
-      while True:
-        plt.pause(self.polling_interval)
-        if self.running:
-          # kinda autoscale
-          ymin = min(self.values)
-          ymax = max(self.values)
-          delta = ymax-ymin
-          plt.ylim(ymin-delta-1, ymax+delta+1) # "+1": safeguard in case we got nothing but the same value
-          ln.set_ydata(self.values)
-          plt.draw()
-        else:
-          break
+    N = self.queue_size
+    
+    self.pos[:, 0] = np.linspace(0, WINDOW_WIDTH, N)
+    self.pos[:, 1] = np.random.normal(scale=50, loc=30, size=N)
+    self.line = scene.visuals.Line(pos=self.pos, parent=canvas.scene)
+    canvas.show()
+    canvas.app.run()
+    
+
+
+    while True:
+      print "test"
+      pass
       
-  def __del__(self):
-    self.running = False
-    print "del"
         
   def push_value(self, value):
       """
@@ -62,5 +61,21 @@ class Plotter(Thread):
       # One goes out, one goes in
       self.values.pop(0)
       self.values.append(value)
+      # update once line created by new thread
+      if self.line != None:
+        # convert to numpy array
+        values_np = np.array(self.values)
+        ymin = min(values_np)
+        ymax = max(values_np)
+        delta = ymax-ymin+1
+        # autoscale and invert axis
+        values_np = (values_np - ymin)
+        values_np = values_np * (WINDOW_HEIGHT/delta) * -1 + WINDOW_HEIGHT
+        #values_np = (values_np - ymin) * (WINDOW_HEIGHT/delta) * (-1) 
+        
+        self.pos[:, 1] = values_np
+        self.line.set_data(self.pos)
+        #self.line.update()
+
         
     
