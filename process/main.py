@@ -1,5 +1,6 @@
 import readerLSL
 import plot
+import time
 
 if __name__ == "__main__":
   reader = readerLSL.ReaderLSL("PPG")
@@ -8,7 +9,6 @@ if __name__ == "__main__":
     print reader.getSamplingRate(i), "Hz for channel", i
     
   harry = plot.Plotter(reader.getSamplingRate(0))
-  
   plot.PlotLaunch()
   
   while True:

@@ -1,27 +1,54 @@
-from vispy import app, scene
-from threading import Thread
+import sys; sys.path.append('../lib') # help python find pylsl relative to this example program
+from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
+import pyqtgraph as pg
+from threading import Thread
 
+# Default windows size
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
 
 class PlotLaunch(Thread):
   """
-  One thread to launch vispy app, try not to instanciate this class twice...
+  One thread to launch vispy app, try not to instanciate this class twice... Call this after Plotter()
   """
+  # one flag to make sure we are the One, another to sync with Plotter
+  singleton = False
   init = False
+  # different list to make data accesible by Plotter and also juste for the sake of keeping windows ref in memory
+  lines = []
+  ps = []
+  wins = []
+  
   def __init__(self):
     Thread.__init__(self)
-    global init
-    assert(PlotLaunch.init == False)
-    PlotLaunch.init = True
+    global singleton
+    assert(PlotLaunch.singleton == False)
+    PlotLaunch.singleton = True
     self.daemon = True
     self.start()
     
   def run(self):
+    app = QtGui.QApplication([])
+    
+    # 
+    global lines, ps, wins
     for canvas in Plotter.canvass:
-      canvas.show()
-    app.run()
+        print "New canvas!"
+        win =  pg.GraphicsWindow(title=canvas.title)
+        win.resize(WINDOW_WIDTH,WINDOW_HEIGHT)
+        PlotLaunch.wins.append(win)
+        p = win.addPlot(title=canvas.title)
+        PlotLaunch.ps.append(p)
+        line = p.plot(pen='y')
+        PlotLaunch.lines.append(line)
+        
+    # Enable antialiasing for prettier plots
+    pg.setConfigOptions(antialias=True)
+    
+    global init
+    PlotLaunch.init = True
+    QtGui.QApplication.instance().exec_()
 
 class Plotter():
   """
@@ -45,16 +72,9 @@ class Plotter():
     # fifo for temporal filter
     self.values =  [0]*self.queue_size
     
-    # init canvas, add to main list
-    self.canvas = scene.SceneCanvas(size=(WINDOW_WIDTH, WINDOW_HEIGHT), keys='interactive', title=self.title)
     global canvass
-    Plotter.canvass.append(self.canvas)
-    
-    # init content: one line
-    self.pos = np.empty((self.queue_size, 2), np.float32)
-    self.pos[:, 0] = np.linspace(0, WINDOW_WIDTH, self.queue_size)
-    self.pos[:, 1] = np.random.normal(scale=50, loc=30, size=self.queue_size)
-    self.line = scene.visuals.Line(pos=self.pos, parent=self.canvas.scene)
+    self.id = len(Plotter.canvass)
+    Plotter.canvass.append(self)
 
   def push_value(self, value):
       """
@@ -63,21 +83,13 @@ class Plotter():
       # One goes out, one goes in
       self.values.pop(0)
       self.values.append(value)
-      # update once line created by new thread
-      if self.line != None:
-        # convert to numpy array
-        values_np = np.array(self.values)
-        ymin = min(values_np)
-        ymax = max(values_np)
-        delta = ymax-ymin+1
-        # autoscale and invert axis
-        values_np = (values_np - ymin)
-        values_np = values_np * (WINDOW_HEIGHT/delta) * -1 + WINDOW_HEIGHT
-        #values_np = (values_np - ymin) * (WINDOW_HEIGHT/delta) * (-1) 
-        
-        self.pos[:, 1] = values_np
-        self.line.set_data(self.pos)
-        
+      # Update plot data once it's created
+      if PlotLaunch.init:
+        line = PlotLaunch.lines[self.id]
+        line.setData(self.values)
+        p =  PlotLaunch.ps[self.id]
+        p.enableAutoRange('xy') 
+
 
         
     
