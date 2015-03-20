@@ -18,6 +18,11 @@ class ReaderLSL():
     for stream in streams:
       self.inlets.append(StreamInlet(stream))
     
+    # retrieve also corresponding StreamInfo for future uses (eg sampling rate)
+    self.infos = []
+    for inlet in self.inlets:
+      self.infos.append(inlet.info())
+    
     # init list of samples
     self.samples = [] * self.nb_streams
 
@@ -27,6 +32,13 @@ class ReaderLSL():
     i=0
     for inlet in self.inlets:
       sample,timestamp = inlet.pull_sample()
-      print i, "--", timestamp, sample
-      i=i+1
+    return sample,timestamp
 
+  def getSamplingRate(self, index):
+    """
+    return sampling rate of given index stream (in Hz, -1 if stream does not exist)
+    """
+    if index < self.nb_streams and index >= 0:
+      return self.infos[index].nominal_srate()
+    else:
+      return -1
