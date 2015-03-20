@@ -7,9 +7,6 @@ import numpy
 # TODO: should be handled by video.detect_faces
 last_faces = [[0,0,128,128]]
 
-# we don't get any info about webcam yet, so we'll share one debug window per iteration of the algo for each face
-DUMMY_WINDOW_NAME="dummy_debug"
-
 def process(frame):
   global last_faces
   # TODO: use filter ala One Euro Filter to stabilize tracking
@@ -35,7 +32,6 @@ def process(frame):
     # duplicate region of interest and sho it
     # FIXME: check that len(start:stop) > 0
     roi = frame[fitFace_start[1]:fitFace_stop[1], fitFace_start[0]:fitFace_stop[0]]
-    cv.ShowImage(DUMMY_WINDOW_NAME+"_"+str(faceN), roi)
     
     # Compute average color
     # wow, lot's of modules and functions to convert roi to matrix to numpy array to get mean color
