@@ -1,6 +1,8 @@
-import sys; sys.path.append('../lib/mtKinter') # help python find mtKinter relative to this example program
-import mtTkinter as Tkinter # bypass some Tkinter internals to make it complient with threads
-import matplotlib.pyplot as plt 
+import sys; sys.path.append('../lib') # help python find mtKinter relative to this example program
+from pyqtgraph.Qt import QtGui, QtCore
+import numpy as np
+import pyqtgraph as pg
+
 from threading import Thread
 
 
@@ -26,39 +28,44 @@ class Plotter(Thread):
     # for plot: X
     self.x=range(0,self.queue_size)
 
+    self.app = QtGui.QApplication([])
+    
+    win = pg.GraphicsWindow(title="Basic plotting examples")
+    win.resize(1000,600)
+    win.setWindowTitle('pyqtgraph example: Plotting')
+    
+    self.p6 = win.addPlot(title="Updating plot")
+    self.curve = self.p6.plot(pen='y')
+    self.data = np.random.normal(size=(10,1000))
+    self.ptr = 0
+    
     self.daemon = True
     self.running = True
     self.start()
     
     
+    
+    
   def run(self):
-      # initialize figure
-      plt.figure() 
-      ln, = plt.plot(self.values)
-      plt.ion()
-      plt.show()
+    #QtGui.QApplication.instance().exec_()
+    while True:
+      pass
+      #self.curve.setData(self.data[self.ptr%10])
+      #if self.ptr == 0:
+      #  self.p6.enableAutoRange('xy', False)  ## stop auto-scaling after the first data set is plotted
+      #self.ptr += 1
 
-      while True:
-        plt.pause(self.polling_interval)
-        if self.running:
-          # kinda autoscale
-          ymin = min(self.values)
-          ymax = max(self.values)
-          delta = ymax-ymin
-          plt.ylim(ymin-delta-1, ymax+delta+1) # "+1": safeguard in case we got nothing but the same value
-          ln.set_ydata(self.values)
-          plt.draw()
-        else:
-          break
-      
-  def __del__(self):
-    self.running = False
-    print "del"
+
         
   def push_value(self, value):
       """
       One new value for the plot
       """
+      #self.curve.setData(self.data[self.ptr%10])
+      #if self.ptr == 0:
+      #  self.p6.enableAutoRange('xy', False)  ## stop auto-scaling after the first data set is plotted
+      #self.ptr += 1
+        
       # One goes out, one goes in
       self.values.pop(0)
       self.values.append(value)
