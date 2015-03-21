@@ -1,4 +1,5 @@
 import data
+import scipy
 
 # Takes a DataBuffer as input, makes computations and serve new values through inheritance.
 
@@ -13,4 +14,30 @@ class Invert(data.DataBuffer):
 
   def __call__(self, data_buffer, new_values):
     self.push_values(new_values * -1)
+    
+class FFT(data.DataBuffer):
+  """
+  Compute FFT of the signal
+  """
+  def __init__(self, input_signal_buffer, window_length = -1, attach_plot = False, name = "FFT"):
+    """
+    input_signal_buffer: SignalBuffer type
+    window_length: set parameter to extend window length of the signal in the buffer
+    """
+    # By default input buffer will be 3 times as long as the original signal
+    if window_length <= 0:
+      window_length = 3 * input_signal_buffer.window_length
+    self.input_buffer = data.SignalBuffer(window_length = window_length, input_data=input_signal_buffer, attach_plot = True)
+    
+    # FFT is mirrored (nyquist), spectrum will have half the points
+    if self.input_buffer.queue_size%2: # odd
+      self.nb_points = (self.input_buffer.queue_size + 1) / 2
+    else: # even
+      self.nb_points = self.input_buffer.queue_size/2 
+    data.DataBuffer.__init__(self, self.input_buffer.sample_rate, self.nb_points, attach_plot = attach_plot, name = name)
+    self.input_buffer.add_callback(self)
+
+  def __call__(self, data_buffer, new_values):
+    fft=abs(scipy.fft(data_buffer.values))
+    self.push_values(fft[0:self.nb_points])
     
