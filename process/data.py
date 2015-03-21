@@ -1,4 +1,5 @@
 import plot
+import numpy as np
 
 class DataBuffer():
   """
@@ -18,7 +19,7 @@ class DataBuffer():
     self.name = name
     
     # fifo for temporal filter
-    self.values =  [0]*self.queue_size
+    self.values =  np.zeros(self.queue_size)
     
     # ini plot, if any
     if attach_plot:
@@ -31,10 +32,8 @@ class DataBuffer():
     One new value for the buffer
     """
     # One goes out, one goes in
-    self.values.pop(0)
-    self.values.append(value)
+    self.values = np.roll(self.values, -1)
+    self.values[-1] = value
     # Update plot data once it's created
     if self.plot:
       self.plot.set_values(self.values)
-
-    
