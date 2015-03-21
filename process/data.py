@@ -3,7 +3,7 @@ import numpy as np
 
 class DataBuffer():
   """
-  Data structure to hold, process and plot signals. Base class, should not be instanciate diretctly.
+  Data structure used to hold, process and plot signals. Base class, should not be instanciate directly by users.
   """
   
   def __init__(self, sample_rate, queue_size, input_data = None, attach_plot = False, name="data"):
@@ -48,38 +48,45 @@ class DataBuffer():
     self.outputs.append(output_data)
     
   def push_value(self, value):
+    """"
+    Ease  single value push, pass it to push_values()
     """
-    One new value for the buffer. We push in turn automatically to every output, if any.
+    self.push_values(np.array([value]))
+
+  def push_values(self, values):
+    """
+    New values for the buffer. We push in turn automatically to every output, if any.
+    NB: if the new values are the same size as the old ones, will replace everything
     Warning: should not be called manually exept if "input_data" is None
     """
     # One goes out, one goes in
-    self.values = np.roll(self.values, -1)
-    self.values[-1] = value
+    self.values = np.roll(self.values, -len(values))
+    self.values[-len(values):] = values
     # Trigger external functions if needed
-    self.nugde_callback()
+    self.nudge_callback(values)
     # Update plot data once it's created
     if self.plot:
       self.plot.set_values(self.values)
     # Push to output
     for output in self.outputs:
-      output.push_value(value)
+      output.push_values(values)
   
   def add_callback(self, fun):
     """
-    Add a fuction to be called automatically each time values are updated
+    Add a fuction to be called automatically each time values are updated. NB: a more powerful and general case compared to "input_data" mechanism.
     """
     self.functions.append(fun)
     
-  def nugde_callback(self):
+  def nudge_callback(self, new_values):
     """
     Send message to all registered callback functions. Used for signal processing
     """
     for fun in self.functions:
-      fun(self)
+      fun(self, new_values)
 
 class SignalBuffer(DataBuffer):
   """
-  Contains signals
+  Contains a signal; possible to play on history size with window_length.
   """
   
   def __init__(self, sample_rate=-1, window_length=1, input_data = None, attach_plot = False, name = "signal"):

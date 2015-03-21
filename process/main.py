@@ -12,7 +12,8 @@ if __name__ == "__main__":
   green_chan = data.SignalBuffer(reader.getSamplingRate(0), attach_plot=True, name="green")
   # Longer history
   data.SignalBuffer(input_data=green_chan, window_length=10, attach_plot=True, name="green_history")
-  signal_processing.Invert(green_chan, attach_plot=True)
+  inverter = signal_processing.Invert(green_chan, attach_plot=True)
+  data.SignalBuffer(input_data=inverter, window_length=10, attach_plot=True, name="invert_history")
   # Will trigger plots if any
   plot.PlotLaunch()
   
