@@ -32,12 +32,14 @@ class DataBuffer():
     self.queue_size = int(queue_size)
     self.name = name
     
-    # fifo for temporal filter
+    # init Y values to 0 and X to order
     self.values =  np.zeros(self.queue_size)
+    self.values_x = np.arange(0,self.queue_size)
     
     # ini plot, if any
     if attach_plot:
       self.plot = plot.Plotter(title=self.name)
+      self.plot.set_x_values(self.values_x)
     else:
       self.plot = None
    
@@ -86,10 +88,11 @@ class DataBuffer():
     Set X points, replace axis of the plot if any
     FIXME: decide if revert should be at plot level
     """
+    self.values_x = x_values
     if self.plot:
       #if revert:
       #  x_values = x_values[::-1]
-      self.plot.set_x_values(x_values)
+      self.plot.set_x_values(self.values_x)
       
   def add_callback(self, fun):
     """
