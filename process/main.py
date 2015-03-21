@@ -1,5 +1,5 @@
 import readerLSL
-import plot, data
+import plot, data, signal_processing
 import time
 
 if __name__ == "__main__":
@@ -11,7 +11,8 @@ if __name__ == "__main__":
   # New holder for green channel
   green_chan = data.SignalBuffer(reader.getSamplingRate(0), attach_plot=True, name="green")
   # Longer history
-  green_chan_memory = data.SignalBuffer(input_data=green_chan, window_length=10, attach_plot=True, name="green_history")
+  data.SignalBuffer(input_data=green_chan, window_length=10, attach_plot=True, name="green_history")
+  signal_processing.Invert(green_chan, attach_plot=True)
   # Will trigger plots if any
   plot.PlotLaunch()
   

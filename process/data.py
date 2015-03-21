@@ -10,21 +10,23 @@ class DataBuffer():
     """
     sample_rate: at which rate values will be sent (in Hz).
     queue_size: number of points of the buffer
-    input_data: which buffer the data comes from; will register automatically. Must be of the same type.
+    input_data: which buffer the data comes from; will register automatically. Must be subclass of DataBuffer
     plot: attach a plot or not
     name: used as title for the plot
     """
     
     # check input data type and register if needed
     if input_data:
-      if self.__class__.__name__ != input_data.__class__.__name__:
-        print "ERROR: instance", self.__class__.__name__, "differs from input_data:", input_data.__class__.__name__
+      if not issubclass(input_data.__class__, DataBuffer):
+        print "ERROR: instance", input_data.__class__, "is not a subclass of DataBuffer"
         raise NameError('IncompatibleInputData')
       else:
         input_data.add_output(self)
         
     # empty list for output callback
     self.outputs = []
+    # another one for processing callback
+    self.functions = []
     
     self.sample_rate = int(sample_rate)
     self.queue_size = int(queue_size)
@@ -53,12 +55,27 @@ class DataBuffer():
     # One goes out, one goes in
     self.values = np.roll(self.values, -1)
     self.values[-1] = value
+    # Trigger external functions if needed
+    self.nugde_callback()
     # Update plot data once it's created
     if self.plot:
       self.plot.set_values(self.values)
     # Push to output
     for output in self.outputs:
       output.push_value(value)
+  
+  def add_callback(self, fun):
+    """
+    Add a fuction to be called automatically each time values are updated
+    """
+    self.functions.append(fun)
+    
+  def nugde_callback(self):
+    """
+    Send message to all registered callback functions. Used for signal processing
+    """
+    for fun in self.functions:
+      fun(self)
 
 class SignalBuffer(DataBuffer):
   """
