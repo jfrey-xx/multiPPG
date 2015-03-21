@@ -22,7 +22,7 @@ class DataBuffer():
         raise NameError('IncompatibleInputData')
       else:
         input_data.add_output(self)
-        
+    
     # empty list for output callback
     self.outputs = []
     # another one for processing callback
@@ -47,21 +47,31 @@ class DataBuffer():
     """
     self.outputs.append(output_data)
     
-  def push_value(self, value):
+  def push_value(self, value, revert = False):
     """"
     Ease  single value push, pass it to push_values()
+    
+    revert: by default values append to the end of the buffer, set True to append to the beginning
+      NB: parameter will be passed to all outputs
     """
-    self.push_values(np.array([value]))
+    self.push_values(np.array([value]), revert = revert)
 
-  def push_values(self, values):
+  def push_values(self, values, revert = False):
     """
     New values for the buffer. We push in turn automatically to every output, if any.
-    NB: if the new values are the same size as the old ones, will replace everything
-    Warning: should not be called manually exept if "input_data" is None
+      NB: if the new values are the same size as the old ones, will replace everything
+      Warning: should not be called manually exept if "input_data" is None
+    
+    revert: by default values append to the end of the buffer, set True to append to the beginning
+      NB: parameter will be passed to all outputs
     """
     # One goes out, one goes in
-    self.values = np.roll(self.values, -len(values))
-    self.values[-len(values):] = values
+    if revert:
+      self.values = np.roll(self.values, len(values))
+      self.values[0:len(values):] = values
+    else:
+      self.values = np.roll(self.values, -len(values))
+      self.values[-len(values):] = values
     # Trigger external functions if needed
     self.nudge_callback(values)
     # Update plot data once it's created
@@ -69,7 +79,7 @@ class DataBuffer():
       self.plot.set_values(self.values)
     # Push to output
     for output in self.outputs:
-      output.push_values(values)
+      output.push_values(values, revert=revert)
   
   def add_callback(self, fun):
     """
@@ -102,5 +112,5 @@ class SignalBuffer(DataBuffer):
       raise NameError('NoSampleRate')
     elif input_data:
       sample_rate = int(input_data.sample_rate)
-        
-    DataBuffer.__init__(self, sample_rate, sample_rate*window_length, input_data = input_data, attach_plot = attach_plot, name = name)
+    self.window_length = window_length
+    DataBuffer.__init__(self, sample_rate, sample_rate*self.window_length, input_data = input_data, attach_plot = attach_plot, name = name)
