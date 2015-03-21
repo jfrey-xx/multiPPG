@@ -36,7 +36,6 @@ class PlotLaunch(Thread):
     # 
     global lines, ps, wins
     for canvas in Plotter.canvass:
-        print "New canvas!"
         win =  pg.GraphicsWindow(title=canvas.title)
         win.resize(WINDOW_WIDTH,WINDOW_HEIGHT)
         PlotLaunch.wins.append(win)

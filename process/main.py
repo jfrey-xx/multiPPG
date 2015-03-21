@@ -8,8 +8,10 @@ if __name__ == "__main__":
   for i in range(reader.nb_streams):
     print reader.getSamplingRate(i), "Hz for channel", i
   
-  # New holder for green hannel
+  # New holder for green channel
   green_chan = data.SignalBuffer(reader.getSamplingRate(0), attach_plot=True, name="green")
+  # Longer history
+  green_chan_memory = data.SignalBuffer(input_data=green_chan, window_length=10, attach_plot=True, name="green_history")
   # Will trigger plots if any
   plot.PlotLaunch()
   
