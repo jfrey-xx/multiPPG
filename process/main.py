@@ -9,7 +9,7 @@ if __name__ == "__main__":
     print reader.getSamplingRate(i), "Hz for channel", i
   
   # New holder for green hannel
-  green_chan = data.DataBuffer(reader.getSamplingRate(0), attach_plot=True, name="green")
+  green_chan = data.SignalBuffer(reader.getSamplingRate(0), attach_plot=True, name="green")
   # Will trigger plots if any
   plot.PlotLaunch()
   

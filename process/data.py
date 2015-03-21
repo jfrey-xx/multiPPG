@@ -3,19 +3,19 @@ import numpy as np
 
 class DataBuffer():
   """
-  Data structure to hold, process and plot signals
+  Data structure to hold, process and plot signals. Base class, should not be instanciate diretctly.
   """
   
-  def __init__(self, sample_rate, window_length=1, attach_plot = False, name="data"):
+  def __init__(self, sample_rate, queue_size, attach_plot = False, name="data"):
     """
-    sample_rate: at which rate values will be sent (in Hz). NB: will be cast to int!
-    window_length: time length of plot (in seconds)
+    sample_rate: at which rate values will be sent (in Hz).
+    queue_size: number of points of the buffer
     plot: attach a plot or not
     name: used as title for the plot
     """
     
     self.sample_rate = int(sample_rate)
-    self.queue_size = self.sample_rate*window_length
+    self.queue_size = int(queue_size)
     self.name = name
     
     # fifo for temporal filter
@@ -29,7 +29,7 @@ class DataBuffer():
 
   def push_value(self, value):
     """
-    One new value for the buffer
+    One new value for the buffer.
     """
     # One goes out, one goes in
     self.values = np.roll(self.values, -1)
@@ -37,3 +37,17 @@ class DataBuffer():
     # Update plot data once it's created
     if self.plot:
       self.plot.set_values(self.values)
+
+class SignalBuffer(DataBuffer):
+  """
+  Contains signals
+  """
+  
+  def __init__(self,  sample_rate, window_length=1, input_data = None, attach_plot = False, name = "signal"):
+    """
+    sample_rate: at which rate values will be sent (in Hz).
+    window_length: time length of signal buffer (in seconds)
+    plot: attach a plot or not
+    name: used as title for the plot
+    """
+    DataBuffer.__init__(self, sample_rate, sample_rate*window_length, attach_plot = attach_plot, name = name)
