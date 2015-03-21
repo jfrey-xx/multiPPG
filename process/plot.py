@@ -63,19 +63,40 @@ class Plotter():
     """
     """
     self.title = title
+    self.values_y = [0]
+    self.values_x = None
      
     # register itself to global canvas list
     global canvass
     self.id = len(Plotter.canvass)
     Plotter.canvass.append(self)
 
-  def set_values(self, values):
-      """
-      Update plot values
-      """
-      # Update plot data once it's created
-      if PlotLaunch.init:
-        line = PlotLaunch.lines[self.id]
-        line.setData(values)
-        p =  PlotLaunch.ps[self.id]
-        p.enableAutoRange('xy') 
+  def set_values(self, values_y):
+    """
+    Update plot values
+    """
+    self.values_y = values_y
+    self.update_plot_values()
+  
+  def set_x_values(self, values_x):
+    """
+    update X axis
+    """
+    self.values_x = values_x
+    self.update_plot_values()
+
+  def update_plot_values(self):
+    """
+    update X and Y axis of plot
+    """
+    # Update plot data once it's created
+    if PlotLaunch.init:
+      line = PlotLaunch.lines[self.id]
+      # do not care about X axis if no info about it
+      if  self.values_x == None:
+        line.setData(self.values_y)
+      else:
+        line.setData(y=self.values_y, x=self.values_x)
+      p =  PlotLaunch.ps[self.id]
+      p.enableAutoRange('xy')
+      

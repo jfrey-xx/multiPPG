@@ -1,5 +1,6 @@
 import data
 import scipy
+import scipy.fftpack
 
 # Takes a DataBuffer as input, makes computations and serve new values through inheritance.
 
@@ -36,8 +37,9 @@ class FFT(data.DataBuffer):
       self.nb_points = self.input_buffer.queue_size/2 
     data.DataBuffer.__init__(self, self.input_buffer.sample_rate, self.nb_points, attach_plot = attach_plot, name = name)
     self.input_buffer.add_callback(self)
+    
+    self.set_x_values(scipy.fftpack.fftfreq( self.input_buffer.queue_size, 1./self.sample_rate)[0:self.nb_points])
 
   def __call__(self, data_buffer, new_values):
     fft=abs(scipy.fft(data_buffer.values))
     self.push_values(fft[0:self.nb_points])
-    

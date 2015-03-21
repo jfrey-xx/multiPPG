@@ -80,7 +80,17 @@ class DataBuffer():
     # Push to output
     for output in self.outputs:
       output.push_values(values, revert=revert)
-  
+      
+  def set_x_values(self, x_values, revert = False):
+    """
+    Set X points, replace axis of the plot if any
+    FIXME: decide if revert should be at plot level
+    """
+    if self.plot:
+      #if revert:
+      #  x_values = x_values[::-1]
+      self.plot.set_x_values(x_values)
+      
   def add_callback(self, fun):
     """
     Add a fuction to be called automatically each time values are updated. NB: a more powerful and general case compared to "input_data" mechanism.
@@ -96,7 +106,7 @@ class DataBuffer():
 
 class SignalBuffer(DataBuffer):
   """
-  Contains a signal; possible to play on history size with window_length.
+  Contains a signal; possible to play on history size with window_length and to time axis
   """
   
   def __init__(self, sample_rate=-1, window_length=1, input_data = None, attach_plot = False, name = "signal"):
@@ -114,3 +124,19 @@ class SignalBuffer(DataBuffer):
       sample_rate = int(input_data.sample_rate)
     self.window_length = window_length
     DataBuffer.__init__(self, sample_rate, sample_rate*self.window_length, input_data = input_data, attach_plot = attach_plot, name = name)
+    
+    self.last_point_time = 0 # in ms
+    
+  def push_values(self, values, **kwargs):
+    """
+    override DataBuffer.push_values to set axis
+    FIXME: CPU intensive
+    """
+    # pass values as usual
+    DataBuffer.push_values(self, values, **kwargs)
+    # update x values
+    new_point_time = self.last_point_time + len(values)/float(self.sample_rate)
+    x_values = np.arange(self.last_point_time, new_point_time, (new_point_time - self.last_point_time) / float(self.queue_size))
+    DataBuffer.set_x_values(self, x_values, **kwargs)
+    self.last_point_time = new_point_time
+    
