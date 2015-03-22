@@ -137,12 +137,13 @@ class SignalBuffer(DataBuffer):
   def push_values(self, values, **kwargs):
     """
     override DataBuffer.push_values to set axis
+    NB: x values accuracy depends on the fact that this function is called at the same frequency as sample_rate
     FIXME: CPU intensive
     """
     # pass values as usual
     DataBuffer.push_values(self, values, **kwargs)
     # update x values
-    self.last_point_time = self.last_point_time + len(values)/float(self.sample_rate)
+    self.last_point_time = self.last_point_time + 1/float(self.sample_rate)
     first_point_time = self.last_point_time - self.queue_size/float(self.sample_rate)
     x_values = np.arange(first_point_time, self.last_point_time, abs(self.last_point_time - first_point_time) / float(self.queue_size))
     DataBuffer.set_x_values(self, x_values, **kwargs)
