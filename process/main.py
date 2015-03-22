@@ -11,6 +11,7 @@ if __name__ == "__main__":
   # New holder for green channel
   green_chan = data.SignalBuffer(reader.getSamplingRate(0), window_length = 10, attach_plot=True, name="green")
   fft = signal_processing.FFT(green_chan, window_length = 10, attach_plot=True)
+  max_fft = signal_processing.GetMaxX(fft, nb_values = 10, attach_plot=True)
   # Will trigger plots if any
   plot.PlotLaunch()
   
