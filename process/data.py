@@ -32,9 +32,13 @@ class DataBuffer():
     self.queue_size = int(queue_size)
     self.name = name
     
-    # init Y values to 0 and X to order
+    # init Y values to 0
     self.values =  np.zeros(self.queue_size)
-    self.values_x = np.arange(0,self.queue_size)
+    # init X value to regular range, except if got input_data, in this case mirror data
+    if input_data:
+      self.values_x = input_data.values_x
+    else:
+      self.values_x = np.arange(0,self.queue_size)
     
     # ini plot, if any
     if attach_plot:

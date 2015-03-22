@@ -10,7 +10,7 @@ if __name__ == "__main__":
   
   # New holder for green channel
   green_chan = data.SignalBuffer(reader.getSamplingRate(0), window_length = 10, attach_plot=True, name="green")
-  inverter = signal_processing.FFT(green_chan, window_length = 10, attach_plot=True)
+  fft = signal_processing.FFT(green_chan, window_length = 10, attach_plot=True)
   # Will trigger plots if any
   plot.PlotLaunch()
   
