@@ -128,7 +128,7 @@ class SignalBuffer(DataBuffer):
     self.window_length = window_length
     DataBuffer.__init__(self, sample_rate, sample_rate*self.window_length, input_data = input_data, attach_plot = attach_plot, name = name)
     
-    self.last_point_time = 0 # in ms
+    self.last_point_time = 0 # in s
     
   def push_values(self, values, **kwargs):
     """
@@ -138,8 +138,8 @@ class SignalBuffer(DataBuffer):
     # pass values as usual
     DataBuffer.push_values(self, values, **kwargs)
     # update x values
-    new_point_time = self.last_point_time + len(values)/float(self.sample_rate)
-    x_values = np.arange(self.last_point_time, new_point_time, (new_point_time - self.last_point_time) / float(self.queue_size))
+    self.last_point_time = self.last_point_time + len(values)/float(self.sample_rate)
+    first_point_time = self.last_point_time - self.queue_size/float(self.sample_rate)
+    x_values = np.arange(first_point_time, self.last_point_time, abs(self.last_point_time - first_point_time) / float(self.queue_size))
     DataBuffer.set_x_values(self, x_values, **kwargs)
-    self.last_point_time = new_point_time
     

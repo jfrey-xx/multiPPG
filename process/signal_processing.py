@@ -28,7 +28,7 @@ class FFT(data.DataBuffer):
     # By default input buffer will be 3 times as long as the original signal
     if window_length <= 0:
       window_length = 3 * input_signal_buffer.window_length
-    self.input_buffer = data.SignalBuffer(window_length = window_length, input_data=input_signal_buffer, attach_plot = True)
+    self.input_buffer = data.SignalBuffer(window_length = window_length, input_data=input_signal_buffer)
     
     # FFT is mirrored (nyquist), spectrum will have half the points
     if self.input_buffer.queue_size%2: # odd
