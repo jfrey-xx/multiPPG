@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+import sys; sys.path.append('../lib') # help python find 1€ filter relative to this example program
 import multiprocessing
 import error
 import sys
@@ -8,6 +11,8 @@ import numpy
 import interface
 import streamerLSL
 import sample_rate
+import timeit
+import OneEuroFilter
 
 HAAR_CASCADE_PATH = "../sources/haarcascades/haarcascade_frontalface_alt.xml"
 e = multiprocessing.Event()
@@ -22,6 +27,17 @@ LSL_SAMPLE_RATE = 30 # 30 FPS... maybe not, FIXME: find a reliable way to discov
 # set "1" to track face every frame, 2 every two frames and so on
 TRACKING_RATE=5
 frame_count = 0
+
+# using 1 euro filter to stabilize head
+euro1_config = {
+    'freq': LSL_SAMPLE_RATE, # Hz
+    'mincutoff': 0.01,  # FIXME
+    'beta': 0.01,       # FIXME
+    'dcutoff': 1.0     # this one should be ok
+    }
+# init filters, X/Y/W/H per persson
+# FIXME: set users
+euro_filters = [OneEuroFilter.OneEuroFilter(**euro1_config) for _ in range(4)]
 
 ##
  # @brief detect_face use the cascade to calculate the square of the faces
@@ -77,6 +93,21 @@ def detect_faces_memory(frame):
     
   return last_faces
 
+def detect_faces_filter(frame):
+  """
+  Use 1euro filter to stabilize frames
+  FIXME: handle only one face
+  """
+  tick = timeit.default_timer()
+  faces = detect_faces_memory(frame) # will at least return one face
+  
+  if len(faces) > 0:
+    # smooth x,y,w,h in first face
+    k = min(len(euro_filters), len(faces[0]))
+    for i in range(k):
+      faces[0][i] = int(round(euro_filters[i](faces[0][i],tick)))
+     
+  return faces
   
 # def getNbFaces():
 #     return nbface
@@ -157,8 +188,12 @@ def start(e,cam,tab,algo):
             #sendToInterface("dummy") # what 4?
             values = heartBeatLUV.process(frame)
         
-        # TODO: adapt values size to NB_CHANNELS
-        streamer(values)
+        # clamp values to lsl channels number
+        lsl_values = numpy.zeros(LSL_NB_CHANNELS)
+        k = min(LSL_NB_CHANNELS, len(values))
+        for i in range(k):
+	  lsl_values[i] = values[i]
+        streamer(lsl_values)
 
         # compute FPS
         monit()

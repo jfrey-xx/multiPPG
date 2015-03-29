@@ -19,8 +19,8 @@ LUV_WINDOW_NAME="LUV_debug"
 
 def process(frame):
   #  region of interest
-  fitFace_color = (0, 255, 255)
-  faces = video.detect_faces_memory(frame)
+  fitFace_color = (255, 255, 0)
+  faces = video.detect_faces_filter(frame)
   # we be filled with mean color of each face
   means = []
   # one ID for each face
