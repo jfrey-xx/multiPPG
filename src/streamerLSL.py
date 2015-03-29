@@ -22,8 +22,7 @@ class StreamerLSL():
 		self.outlet_kinect = StreamOutlet(info_kinect)
 	    
 	# send channels values
-        # sample: list of float values
+        # sample: list of float values (one per face)
 	def __call__(self, sample):
-                # FIXME: in fact we receive a list of tuples
-		self.outlet_kinect.push_sample(list(sample[0]))
+		self.outlet_kinect.push_sample(sample)
 

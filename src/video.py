@@ -14,8 +14,9 @@ e = multiprocessing.Event()
 p = None
 cascade = cv2.CascadeClassifier(HAAR_CASCADE_PATH)
 
-# number of values sent to streamer, ie number of persons x RGBA ... bold move to say only one at the moment
-LSL_NB_CHANNELS = 4
+# number of values sent to streamer, ie number of persons
+# FIXME: bold move to say only one at the moment
+LSL_NB_CHANNELS = 1
 LSL_SAMPLE_RATE = 30 # 30 FPS... maybe not, FIXME: find a reliable way to discover webcam FPS
 
 # set "1" to track face every frame, 2 every two frames and so on

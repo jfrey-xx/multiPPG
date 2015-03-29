@@ -53,7 +53,8 @@ def process(frame):
     
     # Compute average color over skin
     meanColor = cv2.mean(roi_luv, mask=skinMask)
-    means.append(meanColor)
+    # get U channel
+    means.append(meanColor[1])
     
     faceN = faceN+1
   # next step: return as a value and make something out of it
