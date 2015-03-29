@@ -104,6 +104,10 @@ def gui():
     algochoice.config(bg=utility.color1)
     algochoice.pack(anchor=W)
     
+    algochoice=Radiobutton(algo_frame, text="LUV", variable=algo, value=3, command=None)
+    algochoice.config(bg=utility.color1)
+    algochoice.pack(anchor=W)
+    
 #################################### Button START/STOP ####################################
 
     button_frame =Frame(root,borderwidth=1)

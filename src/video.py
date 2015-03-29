@@ -3,7 +3,7 @@ import error
 import sys
 import cv2
 import cv
-import heartBeatPPG, heartBeatDummy
+import heartBeatPPG, heartBeatDummy, heartBeatLUV
 import numpy
 import interface
 import streamerLSL
@@ -130,6 +130,10 @@ def start(e,cam,tab,algo):
             #print "Algo : Dummy"
             #sendToInterface("dummy") # what 4?
             values = heartBeatDummy.process(frame)
+        if algo == 3:
+            #print "Algo : Dummy"
+            #sendToInterface("dummy") # what 4?
+            values = heartBeatLUV.process(frame)
         
         # TODO: adapt values size to NB_CHANNELS
         streamer(values)
