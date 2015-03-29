@@ -83,34 +83,26 @@ def detect_faces_memory(frame):
 
 ##
 # @brief The fonction detect the skin with the color
-# @param frame The window create by OpenCV
-# @return skin The table with the value of the skin
+# @param frame The window create by OpenCV (ov format)
+# @return skin The table with the value of the skin (ov2 format)
 # 
+# FIXME: prone to bug if webcam already B&W
 def detectSkin(frame):
+    # convert frame to cv2 format, and to HSV
+    frame_hsv = cv2.cvtColor(numpy.array(cv.GetMat(frame)), cv2.COLOR_BGR2YCR_CB)
+    # apply blur to remove noise
+    frame_hsv = cv2.GaussianBlur(frame_hsv,(5,5),0)
 
     # min et max de l'espace couleur YCrCb
+    # Y > 80
     # 77 < Cb 127
     # 133 < Cr < 173
-    min_YCrCb = numpy.array([0,133,77],numpy.uint8)
+    min_YCrCb = numpy.array([80,133,77],numpy.uint8)
     max_YCrCb = numpy.array([255,173,127],numpy.uint8)
-
-    # conversion
-
-    min_YCrCb= cv.fromarray(min_YCrCb,True)
-    max_YCrCb= cv.fromarray(max_YCrCb,True)
-    print "[Detect skin] Max : ",max_YCrCb
-    print "[Detect skin] Min : ",min_YCrCb
-    imageYCrCb = cv.CvtColor(frame,frame,cv2.COLOR_BGR2YCR_CB)
-    print "[Detect skin] image : ",imageYCrCb
     
-    # 1 si le pixel est compris entre min et max
-    # 0 sinon
-    skin = cv.InRange(imageYCrCb,min_YCrCb,max_YCrCb,imageYCrCb)
-    print "[Detect skin] skin : ",skin
+    skin = cv2.inRange(frame_hsv, min_YCrCb, max_YCrCb)
+
     return skin
-
-
-
 
 ##
 # @brief The fonction start allows the begining of the capture by OpenCV
