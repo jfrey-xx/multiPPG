@@ -46,9 +46,13 @@ def process(frame):
       #cv2.imshow(LUV_WINDOW_NAME+"_"+str(faceN), roi)
       #cv2.imshow(LUV_WINDOW_NAME+"_skinMask_"+str(faceN), skinMask)
       cv2.imshow(LUV_WINDOW_NAME+"_skin_"+str(faceN), skin)
-      
+    
+    # convert to luv
+    # TODO: check we don't need normalization, see http://docs.opencv.org/modules/imgproc/doc/miscellaneous_transformations.html
+    roi_luv = cv2.cvtColor(roi, cv.CV_BGR2Luv)
+    
     # Compute average color over skin
-    meanColor = cv2.mean(roi, mask=skinMask)
+    meanColor = cv2.mean(roi_luv, mask=skinMask)
     means.append(meanColor)
     
     faceN = faceN+1
