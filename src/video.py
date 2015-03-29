@@ -83,16 +83,17 @@ def detect_faces_memory(frame):
 
 ##
 # @brief The fonction detect the skin with the color
-# @param frame The window create by OpenCV (ov format)
+# @param frame The window create by OpenCV (ov2 format)
 # @return skin The table with the value of the skin (ov2 format)
 # 
 # FIXME: prone to bug if webcam already B&W
 def detectSkin(frame):
-    # convert frame to cv2 format, and to HSV
-    frame_hsv = cv2.cvtColor(numpy.array(cv.GetMat(frame)), cv2.COLOR_BGR2YCR_CB)
+    # convert frame to HSV
+    frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2YCR_CB)
     # apply blur to remove noise
     frame_hsv = cv2.GaussianBlur(frame_hsv,(5,5),0)
-
+    # TODO: check more complicated (and smoothed) methods: http://www.pyimagesearch.com/2014/08/18/skin-detection-step-step-example-using-python-opencv/
+    
     # min et max de l'espace couleur YCrCb
     # Y > 80
     # 77 < Cb 127

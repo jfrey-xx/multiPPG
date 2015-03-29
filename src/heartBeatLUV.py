@@ -36,15 +36,19 @@ def process(frame):
     # FIXME: check that len(start:stop) > 0
     roi = frame[fitFace_start[1]:fitFace_stop[1], fitFace_start[0]:fitFace_stop[0]]
     
-    skin = video.detectSkin(roi)
+    # conver roi to cv2
+    roi = numpy.asarray(cv.GetMat(roi))
+    # extract mask and skin
+    skinMask = video.detectSkin(roi)
+    skin = cv2.bitwise_and(roi, roi, mask = skinMask)
     
     if LUV_DEBUG:
-      cv.ShowImage(LUV_WINDOW_NAME+"_"+str(faceN), roi)
+      #cv2.imshow(LUV_WINDOW_NAME+"_"+str(faceN), roi)
+      #cv2.imshow(LUV_WINDOW_NAME+"_skinMask_"+str(faceN), skinMask)
       cv2.imshow(LUV_WINDOW_NAME+"_skin_"+str(faceN), skin)
       
     # Compute average color over skin
-    # wow, lot's of modules and functions to convert roi to matrix to numpy array to get mean color
-    meanColor = cv2.mean(numpy.asarray(cv.GetMat(roi)))
+    meanColor = cv2.mean(roi, mask=skinMask)
     means.append(meanColor)
     
     faceN = faceN+1
