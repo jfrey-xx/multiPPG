@@ -3,27 +3,16 @@ import video # boo! import within an import! no choice if I want to change littl
 import cv, cv2
 import numpy
 
-# one static variable to remember last faces in case of tracking disruption, one dot by default
-# TODO: should be handled by video.detect_faces
-last_faces = [[0,0,128,128]]
-
 def process(frame):
-  global last_faces
-  # TODO: use filter ala One Euro Filter to stabilize tracking
-  faces = video.detect_faces(frame)
-  # by default: greet color for faces
-  fitFace_color = (0, 255, 0)
-  if faces != ():
-    last_faces = faces
-  else:
-    # "red" flag
-    fitFace_color = (0, 255, 255)
+  #  region of interest
+  fitFace_color = (0, 255, 255)
+  faces = video.detect_faces_memory(frame)
   # we be filled with mean color of each face
   means = []
   # one ID for each face
   faceN = 0
   # Now we can play with faces color!
-  for (x,y,w,h) in last_faces:
+  for (x,y,w,h) in faces:
     # narrower rectangle for effective face, show in green
     fitFace_start = (x+w/4, y+h/6)
     fitFace_stop =  (x+3*w/4, y+5*h/6)

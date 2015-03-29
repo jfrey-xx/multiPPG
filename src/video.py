@@ -49,6 +49,34 @@ def detect_faces(frame):
     frame_count = frame_count + 1
     return faces
 
+# one static variable to remember last faces in case of tracking disruption, one small patch by default
+last_faces = [[0,0,128,128]]
+
+def detect_faces_memory(frame):
+  """
+  same as detect_faces, remember last position of faces in case there's not detected in some frames
+  """
+  global last_faces
+  # TODO: use filter ala One Euro Filter to stabilize tracking
+  faces = detect_faces(frame)
+  # by default: greet color for faces
+  fitFace_color = (0, 255, 0)
+  if faces != ():
+    last_faces = faces
+  else:
+    # "red" flag
+    fitFace_color = (0, 255, 255)
+  # we be filled with mean color of each face
+  means = []
+  # one ID for each face
+  faceN = 0
+  # eye candy to know when tracking is off
+  for (x,y,w,h) in last_faces:
+    cv.Rectangle(frame, (x,y), (x+w,y+h), fitFace_color)
+    
+  return last_faces
+
+  
 # def getNbFaces():
 #     return nbface
 
