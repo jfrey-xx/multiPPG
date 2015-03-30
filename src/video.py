@@ -22,7 +22,7 @@ cascade = cv2.CascadeClassifier(HAAR_CASCADE_PATH)
 # number of values sent to streamer, ie number of persons
 # FIXME: bold move to say only one at the moment
 LSL_NB_CHANNELS = 1
-LSL_SAMPLE_RATE = 30 # 30 FPS... maybe not, FIXME: find a reliable way to discover webcam FPS
+LSL_SAMPLE_RATE = 60 # 30 FPS... maybe not, FIXME: find a reliable way to discover webcam FPS
 
 # set "1" to track face every frame, 2 every two frames and so on
 TRACKING_RATE=5
@@ -202,7 +202,7 @@ def start(e,cam,tab,algo):
         cv.ShowImage(WINDOW_NAME, frame)
 
 ######################## Wait KEY #########################
-        key = cv.WaitKey(20) & 0xFF
+        key = cv.WaitKey(1) & 0xFF
         if key == 27: # 27 = ESC
             cv.DestroyWindow(WINDOW_NAME)
             e.clear()
