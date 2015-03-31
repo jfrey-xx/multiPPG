@@ -46,15 +46,21 @@ def process(frame):
       #cv2.imshow(LUV_WINDOW_NAME+"_"+str(faceN), roi)
       #cv2.imshow(LUV_WINDOW_NAME+"_skinMask_"+str(faceN), skinMask)
       cv2.imshow(LUV_WINDOW_NAME+"_skin_"+str(faceN), skin)
-    
+  
+    # 8bit style
     # convert to luv
-    # TODO: check we don't need normalization, see http://docs.opencv.org/modules/imgproc/doc/miscellaneous_transformations.html
-    roi_luv = cv2.cvtColor(roi, cv.CV_BGR2Luv)
-    
+    #roi_luv = cv2.cvtColor(roi, cv.CV_BGR2Luv)
     # Compute average color over skin
-    meanColor = cv2.mean(roi_luv, mask=skinMask)
+    #meanLUV = cv2.mean(roi_luv, mask=skinMask)
+    
+    # convert to 32F and normalize -- should have less data loss
+    roi32F = numpy.array(roi, dtype=numpy.float32)/255.
+    # convert to luv
+    roi_luv = cv2.cvtColor(roi32F, cv2.cv.CV_BGR2Luv)
+    meanLUV = cv2.mean(roi_luv, mask=skinMask)
+    
     # get U channel
-    means.append(meanColor[1])
+    means.append(meanLUV[1])
     
     faceN = faceN+1
   # next step: return as a value and make something out of it
