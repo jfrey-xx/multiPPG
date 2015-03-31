@@ -13,6 +13,7 @@ import streamerLSL
 import sample_rate
 import timeit
 import OneEuroFilter
+import webcam
 
 HAAR_CASCADE_PATH = "../sources/haarcascades/haarcascade_frontalface_alt.xml"
 e = multiprocessing.Event()
@@ -22,22 +23,29 @@ cascade = cv2.CascadeClassifier(HAAR_CASCADE_PATH)
 # number of values sent to streamer, ie number of persons
 # FIXME: bold move to say only one at the moment
 LSL_NB_CHANNELS = 1
-LSL_SAMPLE_RATE = 60 # 30 FPS... maybe not, FIXME: find a reliable way to discover webcam FPS
 
 # set "1" to track face every frame, 2 every two frames and so on
 TRACKING_RATE=5
 frame_count = 0
 
-# using 1 euro filter to stabilize head
-euro1_config = {
-    'freq': LSL_SAMPLE_RATE, # Hz
-    'mincutoff': 0.01,  # FIXME
-    'beta': 0.01,       # FIXME
-    'dcutoff': 1.0     # this one should be ok
-    }
-# init filters, X/Y/W/H per persson
-# FIXME: set users
-euro_filters = [OneEuroFilter.OneEuroFilter(**euro1_config) for _ in range(4)]
+# Init later when we'll know about FPS
+euro_filters = None
+
+def init_euro_filters(nbUers, fps):
+  """
+  using 1 euro filter to stabilize head
+  @param fps: in Hz, sample rate of webcam
+  FIXME: one person at the moment
+  """
+  euro1_config = {
+      'freq': fps, # Hz
+      'mincutoff': 0.01,
+      'beta': 0.01,
+      'dcutoff': 1.0
+      }
+  global euro_filters
+  # init filters, X/Y/W/H per persson
+  euro_filters = [OneEuroFilter.OneEuroFilter(**euro1_config) for _ in range(4)]
 
 ##
  # @brief detect_face use the cascade to calculate the square of the faces
@@ -101,7 +109,7 @@ def detect_faces_filter(frame):
   tick = timeit.default_timer()
   faces = detect_faces_memory(frame) # will at least return one face
   
-  if len(faces) > 0:
+  if len(faces) > 0 and euro_filters != None:
     # smooth x,y,w,h in first face
     k = min(len(euro_filters), len(faces[0]))
     for i in range(k):
@@ -143,15 +151,21 @@ def detectSkin(frame):
 #  
 def start(e,cam,tab,algo):
     WINDOW_NAME="Camera {0}".format(tab[cam])
-    global cap
-    cap = cv.CaptureFromCAM(cam)
+    cap = webcam.init(cam)
+    
     cv.NamedWindow(WINDOW_NAME, cv.CV_WINDOW_AUTOSIZE)
+    
+    fps = webcam.getFPS(cap)
+    print "FPS:", fps
+    
+    init_euro_filters(LSL_NB_CHANNELS,fps)
+    
     r = [0, 0]
     g = [0, 0]
     b = [0, 0]
 
     # Init network streamer
-    streamer = streamerLSL.StreamerLSL(LSL_NB_CHANNELS,LSL_SAMPLE_RATE)
+    streamer = streamerLSL.StreamerLSL(LSL_NB_CHANNELS,fps)
 
     # Init the thread that will monitor FPS
     monit = sample_rate.PluginSampleRate()
