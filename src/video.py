@@ -22,7 +22,7 @@ cascade = cv2.CascadeClassifier(HAAR_CASCADE_PATH)
 
 # number of values sent to streamer, ie number of persons
 # FIXME: bold move to say only one at the moment
-LSL_NB_CHANNELS = 1
+LSL_NB_CHANNELS = 4
 
 # set "1" to track face every frame, 2 every two frames and so on
 TRACKING_RATE=5
@@ -203,11 +203,11 @@ def start(e,cam,tab,algo):
             values = heartBeatLUV.process(frame)
         
         # clamp values to lsl channels number
-        lsl_values = numpy.zeros(LSL_NB_CHANNELS)
-        k = min(LSL_NB_CHANNELS, len(values))
-        for i in range(k):
-	  lsl_values[i] = values[i]
-        streamer(lsl_values)
+        #lsl_values = numpy.zeros(LSL_NB_CHANNELS)
+        #k = min(LSL_NB_CHANNELS, len(values))
+        #for i in range(k):
+	#  lsl_values[i] = values[i]
+        streamer(values[0])
 
         # compute FPS
         monit()

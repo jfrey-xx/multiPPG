@@ -60,7 +60,7 @@ def process(frame):
     meanLUV = cv2.mean(roi_luv, mask=skinMask)
     
     # get U channel
-    means.append(meanLUV[1])
+    means.append(meanLUV)
     
     faceN = faceN+1
   # next step: return as a value and make something out of it

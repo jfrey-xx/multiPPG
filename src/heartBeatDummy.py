@@ -26,7 +26,7 @@ def process(frame):
     # wow, lot's of modules and functions to convert roi to matrix to numpy array to get mean color
     meanColor = cv2.mean(numpy.asarray(cv.GetMat(roi)))
     # get green channel
-    means.append(meanColor[1])
+    means.append(meanColor)
     
     faceN = faceN+1
   # next step: return as a value and make something out of it
