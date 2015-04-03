@@ -1,26 +1,51 @@
+# -*- coding: utf-8 -*-
+
+import sys; sys.path.append('../lib') # help python find 1€ filter relative to this example program
 import multiprocessing
 import error
 import sys
 import cv2
 import cv
-import heartBeatPPG, heartBeatDummy
+import heartBeatPPG, heartBeatDummy, heartBeatLUV
 import numpy
 import interface
 import streamerLSL
 import sample_rate
+import timeit
+import OneEuroFilter
+import webcam
 
 HAAR_CASCADE_PATH = "../sources/haarcascades/haarcascade_frontalface_alt.xml"
 e = multiprocessing.Event()
 p = None
 cascade = cv2.CascadeClassifier(HAAR_CASCADE_PATH)
 
-# number of values sent to streamer, ie number of persons x RGBA ... bold move to say only one at the moment
-LSL_NB_CHANNELS = 4
-LSL_SAMPLE_RATE = 30 # 30 FPS... maybe not, FIXME: find a reliable way to discover webcam FPS
+# number of values sent to streamer, ie number of persons
+# FIXME: bold move to say only one at the moment
+LSL_NB_CHANNELS = 1
 
 # set "1" to track face every frame, 2 every two frames and so on
 TRACKING_RATE=5
 frame_count = 0
+
+# Init later when we'll know about FPS
+euro_filters = None
+
+def init_euro_filters(nbUers, fps):
+  """
+  using 1 euro filter to stabilize head
+  @param fps: in Hz, sample rate of webcam
+  FIXME: one person at the moment
+  """
+  euro1_config = {
+      'freq': fps, # Hz
+      'mincutoff': 0.01,
+      'beta': 0.01,
+      'dcutoff': 1.0
+      }
+  global euro_filters
+  # init filters, X/Y/W/H per persson
+  euro_filters = [OneEuroFilter.OneEuroFilter(**euro1_config) for _ in range(4)]
 
 ##
  # @brief detect_face use the cascade to calculate the square of the faces
@@ -49,40 +74,76 @@ def detect_faces(frame):
     frame_count = frame_count + 1
     return faces
 
+# one static variable to remember last faces in case of tracking disruption, one small patch by default
+last_faces = [[0,0,128,128]]
+
+def detect_faces_memory(frame):
+  """
+  same as detect_faces, remember last position of faces in case there's not detected in some frames
+  """
+  global last_faces
+  # TODO: use filter ala One Euro Filter to stabilize tracking
+  faces = detect_faces(frame)
+  # by default: greet color for faces
+  fitFace_color = (0, 255, 0)
+  if faces != ():
+    last_faces = faces
+  else:
+    # "red" flag
+    fitFace_color = (0, 255, 255)
+  # we be filled with mean color of each face
+  means = []
+  # one ID for each face
+  faceN = 0
+  # eye candy to know when tracking is off
+  for (x,y,w,h) in last_faces:
+    cv.Rectangle(frame, (x,y), (x+w,y+h), fitFace_color)
+    
+  return last_faces
+
+def detect_faces_filter(frame):
+  """
+  Use 1euro filter to stabilize frames
+  FIXME: handle only one face
+  """
+  tick = timeit.default_timer()
+  faces = detect_faces_memory(frame) # will at least return one face
+  
+  if len(faces) > 0 and euro_filters != None:
+    # smooth x,y,w,h in first face
+    k = min(len(euro_filters), len(faces[0]))
+    for i in range(k):
+      faces[0][i] = int(round(euro_filters[i](faces[0][i],tick)))
+     
+  return faces
+  
 # def getNbFaces():
 #     return nbface
 
 
 ##
 # @brief The fonction detect the skin with the color
-# @param frame The window create by OpenCV
-# @return skin The table with the value of the skin
+# @param frame The window create by OpenCV (ov2 format)
+# @return skin The table with the value of the skin (ov2 format)
 # 
+# FIXME: prone to bug if webcam already B&W
 def detectSkin(frame):
-
+    # convert frame to HSV
+    frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2YCR_CB)
+    # apply blur to remove noise
+    frame_hsv = cv2.GaussianBlur(frame_hsv,(5,5),0)
+    # TODO: check more complicated (and smoothed) methods: http://www.pyimagesearch.com/2014/08/18/skin-detection-step-step-example-using-python-opencv/
+    
     # min et max de l'espace couleur YCrCb
+    # Y > 80
     # 77 < Cb 127
     # 133 < Cr < 173
-    min_YCrCb = numpy.array([0,133,77],numpy.uint8)
+    min_YCrCb = numpy.array([80,133,77],numpy.uint8)
     max_YCrCb = numpy.array([255,173,127],numpy.uint8)
-
-    # conversion
-
-    min_YCrCb= cv.fromarray(min_YCrCb,True)
-    max_YCrCb= cv.fromarray(max_YCrCb,True)
-    print "[Detect skin] Max : ",max_YCrCb
-    print "[Detect skin] Min : ",min_YCrCb
-    imageYCrCb = cv.CvtColor(frame,frame,cv2.COLOR_BGR2YCR_CB)
-    print "[Detect skin] image : ",imageYCrCb
     
-    # 1 si le pixel est compris entre min et max
-    # 0 sinon
-    skin = cv.InRange(imageYCrCb,min_YCrCb,max_YCrCb,imageYCrCb)
-    print "[Detect skin] skin : ",skin
+    skin = cv2.inRange(frame_hsv, min_YCrCb, max_YCrCb)
+
     return skin
-
-
-
 
 ##
 # @brief The fonction start allows the begining of the capture by OpenCV
@@ -90,15 +151,21 @@ def detectSkin(frame):
 #  
 def start(e,cam,tab,algo):
     WINDOW_NAME="Camera {0}".format(tab[cam])
-    global cap
-    cap = cv.CaptureFromCAM(cam)
+    cap = webcam.init(cam)
+    
     cv.NamedWindow(WINDOW_NAME, cv.CV_WINDOW_AUTOSIZE)
+    
+    fps = webcam.getFPS(cap)
+    print "FPS:", fps
+    
+    init_euro_filters(LSL_NB_CHANNELS,fps)
+    
     r = [0, 0]
     g = [0, 0]
     b = [0, 0]
 
     # Init network streamer
-    streamer = streamerLSL.StreamerLSL(LSL_NB_CHANNELS,LSL_SAMPLE_RATE)
+    streamer = streamerLSL.StreamerLSL(LSL_NB_CHANNELS,fps)
 
     # Init the thread that will monitor FPS
     monit = sample_rate.PluginSampleRate()
@@ -130,9 +197,17 @@ def start(e,cam,tab,algo):
             #print "Algo : Dummy"
             #sendToInterface("dummy") # what 4?
             values = heartBeatDummy.process(frame)
+        if algo == 3:
+            #print "Algo : Dummy"
+            #sendToInterface("dummy") # what 4?
+            values = heartBeatLUV.process(frame)
         
-        # TODO: adapt values size to NB_CHANNELS
-        streamer(values)
+        # clamp values to lsl channels number
+        lsl_values = numpy.zeros(LSL_NB_CHANNELS)
+        k = min(LSL_NB_CHANNELS, len(values))
+        for i in range(k):
+	  lsl_values[i] = values[i]
+        streamer(lsl_values)
 
         # compute FPS
         monit()
@@ -141,7 +216,7 @@ def start(e,cam,tab,algo):
         cv.ShowImage(WINDOW_NAME, frame)
 
 ######################## Wait KEY #########################
-        key = cv.WaitKey(20) & 0xFF
+        key = cv.WaitKey(1) & 0xFF
         if key == 27: # 27 = ESC
             cv.DestroyWindow(WINDOW_NAME)
             e.clear()

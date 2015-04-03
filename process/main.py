@@ -19,7 +19,4 @@ if __name__ == "__main__":
     sample, timestamp = reader()
     #print timestamp, sample
     # retrieve value for green channel
-    green_value = 0
-    if len(sample) > 2:
-      green_value = sample[1]
-    green_chan.push_value(green_value)
+    green_chan.push_value(sample)
