@@ -1,6 +1,5 @@
 import readerLSL
 import plot, data, signal_processing
-import time
 
 if __name__ == "__main__":
   reader = readerLSL.ReaderLSL("PPG")
@@ -11,7 +10,7 @@ if __name__ == "__main__":
   # New holder for green channel
   green_chan = data.SignalBuffer(reader.getSamplingRate(0), window_length = 10, attach_plot=True, name="green")
   fft = signal_processing.FFT(green_chan, window_length = 10, attach_plot=True)
-  filtered = signal_processing.TemporalFilter(green_chan, [(0, 2.5),(10,-1)], attach_plot=True)
+  filtered = signal_processing.TemporalFilter(green_chan, [(0, 0.6),(4,-1)], attach_plot=True)
   # Will trigger plots if any
   plot.PlotLaunch()
   
