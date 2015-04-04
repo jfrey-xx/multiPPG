@@ -18,7 +18,7 @@ class Invert(data.DataBuffer):
     data.DataBuffer.__init__(self, self.input_buffer.sample_rate, self.input_buffer.shape, attach_plot = attach_plot, name = name)
     self.input_buffer.add_callback(self)
 
-  def __call__(self, data_buffer, new_values):
+  def __call__(self, all_values, new_values):
     self.push_values(new_values * -1)
     
 class FFT(data.DataBuffer):
@@ -48,8 +48,8 @@ class FFT(data.DataBuffer):
     
     self.set_labels(scipy.fftpack.fftfreq( self.input_buffer.queue_size, 1./self.sample_rate)[0:self.nb_points])
 
-  def __call__(self, data_buffer, new_values):
-    fft=abs(scipy.fft(data_buffer.values))
+  def __call__(self, all_values, new_values):
+    fft=abs(scipy.fft(all_values))
     self.push_values(fft[0:self.nb_points])
 
 class GetMaxX(data.DataBuffer):
@@ -70,9 +70,9 @@ class GetMaxX(data.DataBuffer):
     data.DataBuffer.__init__(self, self.input_buffer.sample_rate, (nb_values,), attach_plot = attach_plot, name = name)
     self.input_buffer.add_callback(self)
 
-  def __call__(self, data_buffer, new_values):
+  def __call__(self, all_values, new_values):
     # sort input by X then reverse order
-    sorted_indices = np.argsort(self.input_buffer.values)[::-1]
+    sorted_indices = np.argsort(all_values)[::-1]
     # retrieve values, select 
     sorted_labels = self.input_buffer.labels[sorted_indices]
     # replace values with corresponding subset
@@ -103,9 +103,9 @@ class TemporalFilter(data.SignalBuffer):
     data.SignalBuffer.__init__(self, self.input_buffer.sample_rate, input_signal_buffer.window_length, attach_plot = attach_plot, name = name)
     self.input_buffer.add_callback(self)
 
-  def __call__(self, data_buffer, new_values):
+  def __call__(self, all_values, new_values):
     # compute FFT over input buffer
-    fft = scipy.fft(self.input_buffer.values)
+    fft = scipy.fft(all_values)
     x = self.input_buffer.labels
     # zero selected frequencies
     for stop in self.stop_list:
@@ -122,6 +122,7 @@ class TemporalFilter(data.SignalBuffer):
 class Morlet(data.DataBuffer):
   """
   Compute continous wavelet transform, morlet style
+  Warning: too slow for real time, computations are threaded
   """
   def __init__(self, input_signal_buffer, window_length = -1, attach_plot = False, name = "Morlet"):
     """
@@ -151,7 +152,7 @@ class Morlet(data.DataBuffer):
     # freq... which is our "x" value (label)
     self.set_labels(self.freq)
 
-    self.input_buffer.add_callback(self)
+    self.input_buffer.add_callback(self, threaded=True)
 
   def get_nb_temporal_points(self):
     """
@@ -177,8 +178,8 @@ class Morlet(data.DataBuffer):
     freq=(self.cw.fourierwl*scales)*self.get_nb_temporal_points()/self.sample_rate
     return freq
 
-  def __call__(self, data_buffer, new_values):
-    self.cw=self.wavelet(self.input_buffer.values,self.maxscale,self.notes,scaling=self.scaling)
+  def __call__(self, all_values, new_values):
+    self.cw=self.wavelet(all_values,self.maxscale,self.notes,scaling=self.scaling)
     values = abs(self.cw.getdata())
     # update spectrum
     self.spectrum = self.get_spectrum()
