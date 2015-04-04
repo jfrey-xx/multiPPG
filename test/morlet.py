@@ -6,6 +6,7 @@ import pyqtgraph as pg
 import readerLSL
 import threading
 import data
+from  utilities import *
 
 app = QtGui.QApplication([])
 
@@ -15,16 +16,25 @@ imv.show()
 wavelet=pw.Morlet
 maxscale=4
 notes=16
-scaling="log" #or "linear"
+scaling="linear" #or "linear"
 
 reader = readerLSL.ReaderLSL("PPG")
-green_chan = data.SignalBuffer(reader.getSamplingRate(0), window_length = 10)
+green_chan = data.DataBuffer(reader.getSamplingRate(0), (nextPow2(reader.getSamplingRate(0)*10),))
 
 def updateplot():
   NA = green_chan.values
   # Wavelet transform the data
   cw=wavelet(NA,maxscale,notes,scaling=scaling)
   cwt=cw.getdata()
+  scales = cw.getscales()
+  power = cw.getpower()
+  y = cw.fourierwl*scales
+  print "shape cwt:", cwt.shape
+  print "nscales:", cw.nscale
+  print "four:", cw.fourierwl
+  print "scales:", scales
+  print "power:", power
+  print "y:", y
   # Rotate matrix for plot
   cwt=np.rot90(cwt)
   imv.setImage(abs(cwt))

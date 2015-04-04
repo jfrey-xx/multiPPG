@@ -140,19 +140,46 @@ class Morlet(data.DataBuffer):
     self.maxscale=4
     self.notes=16
     self.scaling="log"
-    cw=self.wavelet(self.input_buffer.values,self.maxscale,self.notes,scaling=self.scaling)
-    cwt=cw.getdata()
-    print "shape cw:", cwt.shape
+    self.cw=self.wavelet(self.input_buffer.values, self.maxscale, self.notes, scaling=self.scaling)
+    cwt=self.cw.getdata()
 
     data.DataBuffer.__init__(self, self.input_buffer.sample_rate, cwt.shape, name = name)
+
+    # init spectrum and freq
+    self.spectrum = self.get_spectrum()
+    self.freq = self.get_freq()
+    # freq... which is our "x" value (label)
+    self.set_x_values(self.freq)
+
     self.input_buffer.add_callback(self)
-    
-    #self.set_x_values(scipy.fftpack.fftfreq( self.input_buffer.queue_size, 1./self.sample_rate)[0:self.nb_points])
+
+  def get_nb_temporal_points(self):
+    """
+    Return the number of points of the signal buffer
+    """
+    return self.input_buffer.queue_size
+
+  def get_spectrum(self):
+    """
+    Return the average spectrum computed by the wavelet
+    """
+    scales=self.cw.getscales()
+    pwr=self.cw.getpower()
+    spectrum=np.sum(pwr,axis=1)/scales # calculate scale spectrum
+    return spectrum
+
+  def get_freq(self):
+    """
+    Return the list of the frequencies computed by the wavelet
+    """
+    scales=self.cw.getscales()
+    # scale frequencies and correct with sample rate
+    freq=(self.cw.fourierwl*scales)*self.get_nb_temporal_points()/self.sample_rate
+    return freq
 
   def __call__(self, data_buffer, new_values):
-    cw=self.wavelet(self.input_buffer.values,self.maxscale,self.notes,scaling=self.scaling)
-    print "len cw:", len(cw.getdata())
-    values = abs(cw.getdata())
-    print "len abs:", len(values)
-    print "val shape:", values.shape
+    self.cw=self.wavelet(self.input_buffer.values,self.maxscale,self.notes,scaling=self.scaling)
+    values = abs(self.cw.getdata())
+    # update spectrum
+    self.spectrum = self.get_spectrum()
     self.push_values(values)
