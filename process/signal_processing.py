@@ -143,7 +143,7 @@ class Morlet(data.DataBuffer):
     self.cw=self.wavelet(self.input_buffer.values, self.maxscale, self.notes, scaling=self.scaling)
     cwt=self.cw.getdata()
 
-    data.DataBuffer.__init__(self, self.input_buffer.sample_rate, cwt.shape, name = name)
+    data.DataBuffer.__init__(self, self.input_buffer.sample_rate, cwt.shape, attach_plot = attach_plot, name = name)
 
     # init spectrum and freq
     self.spectrum = self.get_spectrum()
@@ -182,4 +182,6 @@ class Morlet(data.DataBuffer):
     values = abs(self.cw.getdata())
     # update spectrum
     self.spectrum = self.get_spectrum()
-    self.push_values(values)
+    # revert to correct order values (or at least the same as the others)
+    # FIXME: not working?
+    self.push_values(values, revert=True)

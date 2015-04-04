@@ -98,11 +98,7 @@ class DataBuffer():
     self.nudge_callback(values)
     # Update plot data once it's created
     if self.plot:
-      # at the moment we have only one regular plot for 1D
-      if self.ndim > 1:
-        raise NameError("PlotNDimNotHandled")
-      self.plot.set_values(self.values)
-    # Push to output
+      self.plot.set_values(self.values)    # Push to output
     for output in self.outputs:
       output.push_values(values, revert=revert)
       

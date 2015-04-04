@@ -11,7 +11,7 @@ if __name__ == "__main__":
   green_chan = data.SignalBuffer(reader.getSamplingRate(0), window_length = 10, attach_plot=True, name="green")
   fft = signal_processing.FFT(green_chan, window_length = 10, attach_plot=True)
   filtered = signal_processing.TemporalFilter(green_chan, [(0, 0.6),(4,-1)], attach_plot=True)
-  morlet = signal_processing.Morlet(green_chan,10)
+  morlet = signal_processing.Morlet(green_chan, window_length=10, attach_plot=True, name="the green morlet")
   # Will trigger plots if any
   plot.PlotLaunch()
   
