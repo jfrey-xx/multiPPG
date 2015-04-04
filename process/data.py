@@ -1,5 +1,6 @@
 import plot
 import numpy as np
+from locker import *
 
 class DataBuffer():
   """
@@ -30,7 +31,7 @@ class DataBuffer():
     # empty list for output callback
     self.outputs = []
     # another one for processing callback
-    self.functions = []
+    self.callbackClients = []
     
     self.sample_rate = int(sample_rate)
     self.shape = shape
@@ -95,7 +96,7 @@ class DataBuffer():
     values.shape = new_values_orig_shape
 
     # Trigger external functions if needed
-    self.nudge_callback(values)
+    self.nudge_callback(values, self.values)
     # Update plot data once it's created
     if self.plot:
       self.plot.set_values(self.values)    # Push to output
@@ -113,18 +114,26 @@ class DataBuffer():
       #  labels = labels[::-1]
       self.plot.set_labels(self.labels)
       
-  def add_callback(self, fun):
+  def add_callback(self, fun, threaded=False):
     """
     Add a fuction to be called automatically each time values are updated. NB: a more powerful and general case compared to "input_data" mechanism.
+    @param fun: function to call
+    @param threaded: instead of calling the fuction at /each/ new value, a separate thread is launched and will be waken periodically with an event. Likely to miss data, but handy for heavy computation so the whole program does not lag. A threaded callback will get the whole values of the buffer, not the new samples ; less likely to skip some.
     """
-    self.functions.append(fun)
+    if threaded:
+      mrCall = CallbackLazy(self, fun)
+    else:
+      mrCall = CallbackNow(self, fun)
+    self.callbackClients.append(mrCall)
     
-  def nudge_callback(self, new_values):
+  def nudge_callback(self, new_values, all_values):
     """
-    Send message to all registered callback functions. Used for signal processing
+    Send message to all registered callback functions. Used for signal processing. Clients will take over or the work will be done by a seperate thread depending of the case -- *This is why the processing is not guaranteed by this class*
+    @new_values: what has been change since last call (aimed at CallbackNow)
+    @all_values: the whole buffer (aimed at CalbackLazy)
     """
-    for fun in self.functions:
-      fun(self, new_values)
+    for client in self.callbackClients:
+      client(new_values, all_values)
 
 class SignalBuffer(DataBuffer):
   """

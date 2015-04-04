@@ -122,6 +122,7 @@ class TemporalFilter(data.SignalBuffer):
 class Morlet(data.DataBuffer):
   """
   Compute continous wavelet transform, morlet style
+  Warning: too slow for real time, computations are threaded
   """
   def __init__(self, input_signal_buffer, window_length = -1, attach_plot = False, name = "Morlet"):
     """
@@ -151,7 +152,7 @@ class Morlet(data.DataBuffer):
     # freq... which is our "x" value (label)
     self.set_labels(self.freq)
 
-    self.input_buffer.add_callback(self)
+    self.input_buffer.add_callback(self, threaded=True)
 
   def get_nb_temporal_points(self):
     """
