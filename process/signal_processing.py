@@ -119,3 +119,40 @@ class TemporalFilter(data.SignalBuffer):
     # compute iFFT and push    
     self.push_values(scipy.ifft(fft).real)
 
+class Morlet(data.DataBuffer):
+  """
+  Compute continous wavelet transform, morlet style
+  """
+  def __init__(self, input_signal_buffer, window_length = -1, attach_plot = False, name = "Morlet"):
+    """
+    input_signal_buffer: SignalBuffer type
+    window_length: set parameter to extend window length of the signal in the buffer
+    """
+    # By default input buffer will be 3 times as long as the original signal + should be next power of two
+    if window_length <= 0:
+      window_length = 3 * input_signal_buffer.window_length
+    # create correct input buffer, with size power of 2      
+    input_shape =  (nextPow2(window_length * input_signal_buffer.sample_rate),)
+    self.input_buffer = data.DataBuffer(input_signal_buffer.sample_rate, input_shape, input_data = input_signal_buffer)
+    
+    # first wave to init self DataBuffer
+    self.wavelet=pw.Morlet
+    self.maxscale=4
+    self.notes=16
+    self.scaling="log"
+    cw=self.wavelet(self.input_buffer.values,self.maxscale,self.notes,scaling=self.scaling)
+    cwt=cw.getdata()
+    print "shape cw:", cwt.shape
+
+    data.DataBuffer.__init__(self, self.input_buffer.sample_rate, cwt.shape, name = name)
+    self.input_buffer.add_callback(self)
+    
+    #self.set_x_values(scipy.fftpack.fftfreq( self.input_buffer.queue_size, 1./self.sample_rate)[0:self.nb_points])
+
+  def __call__(self, data_buffer, new_values):
+    cw=self.wavelet(self.input_buffer.values,self.maxscale,self.notes,scaling=self.scaling)
+    print "len cw:", len(cw.getdata())
+    values = abs(cw.getdata())
+    print "len abs:", len(values)
+    print "val shape:", values.shape
+    self.push_values(values)
