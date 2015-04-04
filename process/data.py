@@ -96,7 +96,7 @@ class DataBuffer():
     values.shape = new_values_orig_shape
 
     # Trigger external functions if needed
-    self.nudge_callback(values, self.values)
+    self.nudge_callback(self.values, values)
     # Update plot data once it's created
     if self.plot:
       self.plot.set_values(self.values)    # Push to output
@@ -121,19 +121,19 @@ class DataBuffer():
     @param threaded: instead of calling the fuction at /each/ new value, a separate thread is launched and will be waken periodically with an event. Likely to miss data, but handy for heavy computation so the whole program does not lag. A threaded callback will get the whole values of the buffer, not the new samples ; less likely to skip some.
     """
     if threaded:
-      mrCall = CallbackLazy(self, fun)
+      mrCall = CallbackLazy(fun)
     else:
-      mrCall = CallbackNow(self, fun)
+      mrCall = CallbackNow(fun)
     self.callbackClients.append(mrCall)
     
-  def nudge_callback(self, new_values, all_values):
+  def nudge_callback(self, all_values, new_values):
     """
     Send message to all registered callback functions. Used for signal processing. Clients will take over or the work will be done by a seperate thread depending of the case -- *This is why the processing is not guaranteed by this class*
     @new_values: what has been change since last call (aimed at CallbackNow)
     @all_values: the whole buffer (aimed at CalbackLazy)
     """
     for client in self.callbackClients:
-      client(new_values, all_values)
+      client(all_values, new_values)
 
 class SignalBuffer(DataBuffer):
   """
