@@ -186,3 +186,20 @@ class Morlet(data.DataBuffer):
     # revert to correct order values (or at least the same as the others)
     # FIXME: not working?
     self.push_values(values, revert=True)
+
+class MorletSpectrum(data.DataBuffer):
+  """
+  1D signal out of Mr Morlet
+  @param morlet: Morlet class
+  """
+  def __init__(self, morlet, attach_plot = False, name = "morlet spectrum"):
+    shape = (len(morlet.get_spectrum()),)
+    data.DataBuffer.__init__(self, morlet.sample_rate, shape, attach_plot = attach_plot, name = name)
+    self.set_labels(morlet.get_freq())
+    morlet.add_callback(self)
+    # FIXME: not great *at all* to have a direct ref...
+    self.morlet = morlet
+
+  def __call__(self, all_values, new_values):
+    values = self.morlet.get_spectrum()
+    self.push_values(values)

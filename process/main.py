@@ -12,6 +12,7 @@ if __name__ == "__main__":
   fft = signal_processing.FFT(green_chan, window_length = 10, attach_plot=True)
   #filtered = signal_processing.TemporalFilter(green_chan, [(0, 0.6),(4,-1)], attach_plot=True)
   morlet = signal_processing.Morlet(green_chan, window_length=10, attach_plot=True, name="the green morlet")
+  morlet_spec = signal_processing.MorletSpectrum(morlet, attach_plot=True)
   # Will trigger plots if any
   plot.PlotLaunch()
   
