@@ -18,10 +18,9 @@ class PlotLaunch(Thread):
   singleton = False
   init = False
   # different list to make data accesible by Plotter and also juste for the sake of keeping windows ref in memory
-  lines = []
-  ps = []
-  wins = []
-  
+  plots = [] # the object that represents the value (lines or image depending on dimension)
+  figures = [] # the whole figue (with axis)
+  wins = [] # figure's windows, that won't be used, we keep a ref to prevent system to destroy objects automatically
   def __init__(self):
     Thread.__init__(self)
     global singleton
@@ -33,16 +32,34 @@ class PlotLaunch(Thread):
   def run(self):
     app = QtGui.QApplication([])
     
-    # 
-    global lines, ps, wins
+    # populate plots and figures arrays
+    global plots, figures, wins
     for canvas in Plotter.canvass:
-        win =  pg.GraphicsWindow(title=canvas.title)
-        win.resize(WINDOW_WIDTH,WINDOW_HEIGHT)
-        PlotLaunch.wins.append(win)
-        p = win.addPlot(title=canvas.title)
-        PlotLaunch.ps.append(p)
-        line = p.plot(pen='y')
-        PlotLaunch.lines.append(line)
+        # 1D: a plot
+        if canvas.ndim == 1:
+            win =  pg.GraphicsWindow(title=canvas.title)
+            PlotLaunch.wins.append(win) # keep a ref in mem against garbage collector
+            win.resize(WINDOW_WIDTH,WINDOW_HEIGHT)
+            fig = win.addPlot(title=canvas.title)
+            PlotLaunch.figures.append(fig)
+            plot = fig.plot(pen='y')
+            PlotLaunch.plots.append(plot)
+        # 2D: a raster (an image)
+        elif canvas.ndim == 2:
+            win = QtGui.QMainWindow()
+            imv = pg.ImageView()
+            # for an image there is no such separation as win/figure/plot (?), duplicate entries to keep same order
+            PlotLaunch.wins.append(win)
+            #PlotLaunch.wins.append(imv)
+            PlotLaunch.figures.append(imv)
+            PlotLaunch.plots.append(imv)
+            #imv.show()
+            win.setCentralWidget(imv)
+            win.resize(WINDOW_WIDTH,WINDOW_HEIGHT)
+            win.show()
+            win.setWindowTitle(canvas.title)
+        else:
+            raise NameError("PlotNDimNotSupported")
         
     # Enable antialiasing for prettier plots
     pg.setConfigOptions(antialias=True)
@@ -51,52 +68,74 @@ class PlotLaunch(Thread):
     PlotLaunch.init = True
     QtGui.QApplication.instance().exec_()
 
+  @classmethod
+  def update_plot(cls,canvas):
+    """
+    A Plotter object asks the charming manager to update itself
+    @param canvas: instance of Plotter requesting
+    """
+    # Update plot data once it's created
+    if cls.init:
+      # 1D plot
+      if canvas.ndim == 1:
+        plot = cls.plots[canvas.id]
+        # do not care about X axis if no info about it
+        if  canvas.labels == None:
+          plot.setData(canvas.values)
+        else:
+          plot.setData(y=canvas.values, x=canvas.labels)
+        fig = cls.figures[canvas.id]
+        fig.enableAutoRange('xy')
+      # 2D image
+      elif canvas.ndim == 2:
+        # Rotate matrix to orientate correctly
+        values=np.rot90(canvas.values)
+        fig = cls.figures[canvas.id]
+        fig.setImage(values)
+      else:
+         raise NameError("PlotNDimNotSupported")
+
+            
 class Plotter():
   """
-  Use singleton threads to update regularely a data plot
+  Use singleton threads to update regularely a data plot.
+  Handle automatically up to 2 dimensions.
   """
   
   # canvas list for main thread
   canvass = []
   
-  def __init__(self, title="plot"):
+  def __init__(self, shape, title="plot"):
     """
+    shape: tuple that contains the dimensions of the plot
     """
     self.title = title
-    self.values_y = [0]
-    self.values_x = None
+    self.values = np.zeros(shape) # aka "y" for 1D
+    self.ndim = len(shape)
+    self.labels = None # aka "x" for 1D
      
     # register itself to global canvas list
     global canvass
     self.id = len(Plotter.canvass)
     Plotter.canvass.append(self)
 
-  def set_values(self, values_y):
+  def set_values(self, values):
     """
     Update plot values
     """
-    self.values_y = values_y
+    self.values = values
     self.update_plot_values()
   
-  def set_x_values(self, values_x):
+  def set_labels(self, labels):
     """
-    update X axis
+    update labels (eg X axis for 1D)
     """
-    self.values_x = values_x
+    self.labels = labels
     self.update_plot_values()
 
   def update_plot_values(self):
     """
-    update X and Y axis of plot
+    ask PlotLaunch to update values and labels (if any)
     """
-    # Update plot data once it's created
-    if PlotLaunch.init:
-      line = PlotLaunch.lines[self.id]
-      # do not care about X axis if no info about it
-      if  self.values_x == None:
-        line.setData(self.values_y)
-      else:
-        line.setData(y=self.values_y, x=self.values_x)
-      p =  PlotLaunch.ps[self.id]
-      p.enableAutoRange('xy')
-      
+    PlotLaunch.update_plot(self)
+
