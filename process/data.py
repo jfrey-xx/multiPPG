@@ -6,10 +6,10 @@ class DataBuffer():
   Data structure used to hold, process and plot signals. Base class, should not be instanciate directly by users.
   """
   
-  def __init__(self, sample_rate, queue_size, input_data = None, attach_plot = False, name="data"):
+  def __init__(self, sample_rate, shape, input_data = None, attach_plot = False, name="data"):
     """
     sample_rate: at which rate values will be sent (in Hz).
-    queue_size: number of points of the buffer
+    shape number of points of the buffer, MUST be a tuple since it can have more than one dimension (eg. (128,128) for a small matrix). NB: must also hold integers.
     input_data: which buffer the data comes from; will register automatically. Must be subclass of DataBuffer
     plot: attach a plot or not
     name: used as title for the plot
@@ -23,22 +23,28 @@ class DataBuffer():
       else:
         input_data.add_output(self)
     
+    # check that shape has the right format
+    if not type(shape) is tuple:
+      raise NameError('WrongShapeFormat')
+
     # empty list for output callback
     self.outputs = []
     # another one for processing callback
     self.functions = []
     
     self.sample_rate = int(sample_rate)
-    self.queue_size = int(queue_size)
+    self.shape = shape
     self.name = name
     
-    # init Y values to 0
-    self.values =  np.zeros(self.queue_size)
-    # init X value to regular range, except if got input_data, in this case mirror data
+    # init Y / n-dim values to 0
+    self.values =  np.zeros(self.shape)
+    self.queue_size = self.values.size
+    self.ndim = self.values.ndim
+    # init X (ie label) value to regular range, except if got input_data, in this case mirror data
     if input_data:
       self.values_x = input_data.values_x
     else:
-      self.values_x = np.arange(0,self.queue_size)
+        self.values_x = np.arange(0,self.shape[0])
     
     # ini plot, if any
     if attach_plot:
@@ -59,6 +65,7 @@ class DataBuffer():
     
     revert: by default values append to the end of the buffer, set True to append to the beginning
       NB: parameter will be passed to all outputs
+      FIXME: unexpected results with multi-dimensional arrays
     """
     self.push_values(np.array([value]), revert = revert)
 
@@ -70,7 +77,12 @@ class DataBuffer():
     
     revert: by default values append to the end of the buffer, set True to append to the beginning
       NB: parameter will be passed to all outputs
+      WARNING: unexpected results when incoming values shape and size does not match internal array (ie could shift values toward other dimensions)
     """
+    # work temporarily in 1D to update values
+    self.values.shape = (self.values.size)
+    new_values_orig_shape = values.shape
+    values.shape = values.size
     # One goes out, one goes in
     if revert:
       self.values = np.roll(self.values, len(values))
@@ -78,10 +90,17 @@ class DataBuffer():
     else:
       self.values = np.roll(self.values, -len(values))
       self.values[-len(values):] = values
+    # back to original shape for both arrays
+    self.values.shape = self.shape
+    values.shape = new_values_orig_shape
+
     # Trigger external functions if needed
     self.nudge_callback(values)
     # Update plot data once it's created
     if self.plot:
+      # at the moment we have only one regular plot for 1D
+      if self.ndim > 1:
+        raise NameError("PlotNDimNotHandled")
       self.plot.set_values(self.values)
     # Push to output
     for output in self.outputs:
@@ -113,7 +132,7 @@ class DataBuffer():
 
 class SignalBuffer(DataBuffer):
   """
-  Contains a signal; possible to play on history size with window_length and to time axis
+  Contains a 1D signal; possible to play on history size with window_length and to time axis
   """
   
   def __init__(self, sample_rate=-1, window_length=1, input_data = None, attach_plot = False, name = "signal"):
@@ -130,7 +149,7 @@ class SignalBuffer(DataBuffer):
     elif input_data:
       sample_rate = int(input_data.sample_rate)
     self.window_length = window_length
-    DataBuffer.__init__(self, sample_rate, sample_rate*self.window_length, input_data = input_data, attach_plot = attach_plot, name = name)
+    DataBuffer.__init__(self, sample_rate, (sample_rate*self.window_length,), input_data = input_data, attach_plot = attach_plot, name = name)
     
     self.last_point_time = 0 # in s
     
