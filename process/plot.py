@@ -53,50 +53,53 @@ class PlotLaunch(Thread):
 
 class Plotter():
   """
-  Use singleton threads to update regularely a data plot
+  Use singleton threads to update regularely a data plot.
+  Handle automatically up to 2 dimensions.
   """
   
   # canvas list for main thread
   canvass = []
   
-  def __init__(self, title="plot"):
+  def __init__(self, shape, title="plot"):
     """
+    shape: tuple that contains the dimensions of the plot
     """
     self.title = title
-    self.values_y = [0]
-    self.values_x = None
+    self.values = np.zeros(shape) # aka "y" for 1D
+    self.ndim = len(shape)
+    self.labels = None # aka "x" for 1D
      
     # register itself to global canvas list
     global canvass
     self.id = len(Plotter.canvass)
     Plotter.canvass.append(self)
 
-  def set_values(self, values_y):
+  def set_values(self, values):
     """
     Update plot values
     """
-    self.values_y = values_y
+    self.values = values
     self.update_plot_values()
   
-  def set_x_values(self, values_x):
+  def set_labels(self, labels):
     """
-    update X axis
+    update labels (eg X axis for 1D)
     """
-    self.values_x = values_x
+    self.labels = labels
     self.update_plot_values()
 
   def update_plot_values(self):
     """
-    update X and Y axis of plot
+    update values and labels (if any)
     """
     # Update plot data once it's created
     if PlotLaunch.init:
       line = PlotLaunch.lines[self.id]
       # do not care about X axis if no info about it
-      if  self.values_x == None:
-        line.setData(self.values_y)
+      if  self.labels == None:
+        line.setData(self.values)
       else:
-        line.setData(y=self.values_y, x=self.values_x)
+        line.setData(y=self.values, x=self.labels)
       p =  PlotLaunch.ps[self.id]
       p.enableAutoRange('xy')
       

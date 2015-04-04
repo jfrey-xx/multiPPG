@@ -40,16 +40,16 @@ class DataBuffer():
     self.values =  np.zeros(self.shape)
     self.queue_size = self.values.size
     self.ndim = self.values.ndim
-    # init X (ie label) value to regular range, except if got input_data, in this case mirror data
+    # init labels value to regular range, except if got input_data, in this case mirror data
     if input_data:
-      self.values_x = input_data.values_x
+      self.labels = input_data.labels
     else:
-        self.values_x = np.arange(0,self.shape[0])
+        self.labels = np.arange(0,self.shape[0])
     
     # ini plot, if any
     if attach_plot:
-      self.plot = plot.Plotter(title=self.name)
-      self.plot.set_x_values(self.values_x)
+      self.plot = plot.Plotter(shape, title=self.name)
+      self.plot.set_labels(self.labels)
     else:
       self.plot = None
    
@@ -106,16 +106,16 @@ class DataBuffer():
     for output in self.outputs:
       output.push_values(values, revert=revert)
       
-  def set_x_values(self, x_values, revert = False):
+  def set_labels(self, labels, revert = False):
     """
-    Set X points, replace axis of the plot if any
+    Set labels (eg X axis), replace data of the plot if any
     FIXME: decide if revert should be at plot level
     """
-    self.values_x = x_values
+    self.labels = labels
     if self.plot:
       #if revert:
-      #  x_values = x_values[::-1]
-      self.plot.set_x_values(self.values_x)
+      #  labels = labels[::-1]
+      self.plot.set_labels(self.labels)
       
   def add_callback(self, fun):
     """
@@ -164,6 +164,6 @@ class SignalBuffer(DataBuffer):
     # update x values
     self.last_point_time = self.last_point_time + 1/float(self.sample_rate)
     first_point_time = self.last_point_time - self.queue_size/float(self.sample_rate)
-    x_values = np.arange(first_point_time, self.last_point_time, abs(self.last_point_time - first_point_time) / float(self.queue_size))
-    DataBuffer.set_x_values(self, x_values, **kwargs)
+    labels = np.arange(first_point_time, self.last_point_time, abs(self.last_point_time - first_point_time) / float(self.queue_size))
+    DataBuffer.set_labels(self, labels, **kwargs)
     

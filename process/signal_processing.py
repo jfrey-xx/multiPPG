@@ -46,7 +46,7 @@ class FFT(data.DataBuffer):
     data.DataBuffer.__init__(self, self.input_buffer.sample_rate, (self.nb_points,), attach_plot = attach_plot, name = name)
     self.input_buffer.add_callback(self)
     
-    self.set_x_values(scipy.fftpack.fftfreq( self.input_buffer.queue_size, 1./self.sample_rate)[0:self.nb_points])
+    self.set_labels(scipy.fftpack.fftfreq( self.input_buffer.queue_size, 1./self.sample_rate)[0:self.nb_points])
 
   def __call__(self, data_buffer, new_values):
     fft=abs(scipy.fft(data_buffer.values))
@@ -74,9 +74,9 @@ class GetMaxX(data.DataBuffer):
     # sort input by X then reverse order
     sorted_indices = np.argsort(self.input_buffer.values)[::-1]
     # retrieve values, select 
-    sorted_x_values = self.input_buffer.values_x[sorted_indices]
-    # replace values with corresponding subdet
-    self.push_values(sorted_x_values[0:self.queue_size])
+    sorted_labels = self.input_buffer.labels[sorted_indices]
+    # replace values with corresponding subset
+    self.push_values(sorted_sabels[0:self.queue_size])
 
 class TemporalFilter(data.SignalBuffer):
   """
@@ -98,7 +98,7 @@ class TemporalFilter(data.SignalBuffer):
       
     # use a DataBuffer type because we store FFT, need fixed X axis (and don't use signal_processing.FFT because we need all points)
     self.input_buffer = data.DataBuffer(input_signal_buffer.sample_rate, (input_signal_buffer.sample_rate*window_length,), input_data=input_signal_buffer)
-    self.input_buffer.set_x_values(scipy.fftpack.fftfreq(self.input_buffer.queue_size, 1./input_signal_buffer.sample_rate))
+    self.input_buffer.set_labels(scipy.fftpack.fftfreq(self.input_buffer.queue_size, 1./input_signal_buffer.sample_rate))
     
     data.SignalBuffer.__init__(self, self.input_buffer.sample_rate, input_signal_buffer.window_length, attach_plot = attach_plot, name = name)
     self.input_buffer.add_callback(self)
@@ -106,7 +106,7 @@ class TemporalFilter(data.SignalBuffer):
   def __call__(self, data_buffer, new_values):
     # compute FFT over input buffer
     fft = scipy.fft(self.input_buffer.values)
-    x = self.input_buffer.values_x
+    x = self.input_buffer.labels
     # zero selected frequencies
     for stop in self.stop_list:
       start = stop[0]
@@ -149,7 +149,7 @@ class Morlet(data.DataBuffer):
     self.spectrum = self.get_spectrum()
     self.freq = self.get_freq()
     # freq... which is our "x" value (label)
-    self.set_x_values(self.freq)
+    self.set_labels(self.freq)
 
     self.input_buffer.add_callback(self)
 
