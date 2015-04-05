@@ -222,3 +222,25 @@ class RemoveSlidingAverage(data.DataBuffer):
       """
       new_values = new_values - np.mean(all_values)
       self.push_values(new_values)
+
+class Derivative(data.DataBuffer):
+  """
+  Use numpy.diff to compute firt order derivative
+  """
+  def __init__(self, input_data_buffer, window_length = -1, attach_plot = False, name = "Derivative"):
+    # By default input buffer will be 1s long
+    if window_length <= 0:
+      window_length = 1
+    # FIXME: should ceil a bit everywhere like that probably
+    shape = (np.ceil(input_data_buffer.sample_rate*window_length),)
+    self.input_buffer = data.DataBuffer(input_data_buffer.sample_rate, shape, input_data=input_data_buffer)
+    
+    data.DataBuffer.__init__(self, self.input_buffer.sample_rate, shape, attach_plot = attach_plot, name = name)
+    self.input_buffer.add_callback(self)
+
+  def __call__(self, all_values, new_values):
+    x = self.input_buffer.labels
+    dx =  x[-1] - x[0]# np.diff(x)
+    dy = np.diff(all_values)
+    df = dy/dx
+    self.push_values(df)
