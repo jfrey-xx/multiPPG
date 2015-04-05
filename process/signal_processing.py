@@ -58,10 +58,12 @@ class GetMaxX(data.DataBuffer):
     input_data_buffer: DataBuffer type
     nb_values: retains only some values. By default: all
     FIXME: 1D only at the moment
+    stop_list: tuples of intervals to ignore (see TemporalFilter help)
   """
-  def __init__(self, input_data_buffer, nb_values = -1, attach_plot = False, name = "max X"):
+  def __init__(self, input_data_buffer, nb_values = -1, stop_list = (), attach_plot = False, name = "max X"):
     if input_data_buffer.ndim > 1:
       raise NameError("NDimNotHandled")
+    self.stop_list = stop_list
     # init with a copy of input buffer
     self.input_buffer = data.DataBuffer(input_data_buffer.sample_rate, input_data_buffer.shape, input_data=input_data_buffer)
     # we have to dublicate manually labels now -- here it's the same dimensions, that's okay
@@ -73,6 +75,16 @@ class GetMaxX(data.DataBuffer):
     self.input_buffer.add_callback(self)
 
   def __call__(self, all_values, new_values):
+    x = self.input_buffer.labels
+    # zero selected frequencies
+    for stop in self.stop_list:
+      start = stop[0]
+      end = stop[1]
+      # "-1" code for upper bound
+      if end == -1:
+        end = np.max(x)
+      # zero selected band
+      all_values[(abs(x) >= start) & (abs(x) <= end)] = 0
     # sort input by X then reverse order
     sorted_indices = np.argsort(all_values)[::-1]
     # retrieve values, select 
@@ -268,5 +280,4 @@ class CondidenceIndex(data.DataBuffer):
       # TODO: for sure in one numpy insrtuction we could do that
       s+=np.abs(all_values[i+half]-all_values[i])
     value=(10-np.log(s)**3)*10
-    print value
     self.push_value(value)
