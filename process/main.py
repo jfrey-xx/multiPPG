@@ -30,7 +30,7 @@ if __name__ == "__main__":
   
   # confidence index: derivative on 0.5s window of raw signal
   deriv = Derivative(green_chan, window_length=0.5, attach_plot=True)
-
+  conf_idx = CondidenceIndex(green_chan, window_length=10, attach_plot=True)
 
   ## testing normalization
   #slide_avg = RemoveSlidingAverage(green_chan, attach_plot=False)

@@ -244,3 +244,24 @@ class Derivative(data.DataBuffer):
     dy = np.diff(all_values)
     df = dy/dx
     self.push_values(df)
+
+class CondidenceIndex(data.DataBuffer):
+  """
+  Very specific, implements confidence index described by Bousefsaf2015 (derivative and some log)
+  """
+  def __init__(self, input_data_buffer, window_length = 1, attach_plot = False, name = "Derivative"):
+    # the alorithm work on 0.5 time windom
+    shape_input = (np.ceil(input_data_buffer.sample_rate*0.5),)
+    self.input_buffer = data.DataBuffer(input_data_buffer.sample_rate, shape_input, input_data=input_data_buffer)
+    
+    shape =  (np.ceil(input_data_buffer.sample_rate*window_length),)
+    data.DataBuffer.__init__(self, self.input_buffer.sample_rate, shape, attach_plot = attach_plot, name = name)
+    self.input_buffer.add_callback(self)
+
+  def __call__(self, all_values, new_values):
+    x = self.input_buffer.labels
+    dx = np.diff(x)
+    dy = np.diff(all_values)
+    df_abs = np.abs(dy/dx)
+    values=(10-np.log(df_abs)**3)*10
+    self.push_values(values)
