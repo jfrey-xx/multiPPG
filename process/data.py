@@ -41,11 +41,8 @@ class DataBuffer():
     self.values =  np.zeros(self.shape)
     self.queue_size = self.values.size
     self.ndim = self.values.ndim
-    # init labels value to regular range, except if got input_data, in this case mirror data
-    if input_data:
-      self.labels = input_data.labels
-    else:
-        self.labels = np.arange(0,self.shape[0])
+    # init labels value to regular range
+    self.labels = np.arange(0,self.shape[0])
     
     # ini plot, if any
     if attach_plot:

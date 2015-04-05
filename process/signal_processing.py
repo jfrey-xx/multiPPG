@@ -58,12 +58,16 @@ class GetMaxX(data.DataBuffer):
     input_data_buffer: DataBuffer type
     nb_values: retains only some values. By default: all
     FIXME: 1D only at the moment
+    stop_list: tuples of intervals to ignore (see TemporalFilter help)
   """
-  def __init__(self, input_data_buffer, nb_values = -1, attach_plot = False, name = "max X"):
+  def __init__(self, input_data_buffer, nb_values = -1, stop_list = [], attach_plot = False, name = "max X"):
     if input_data_buffer.ndim > 1:
       raise NameError("NDimNotHandled")
+    self.stop_list = stop_list
     # init with a copy of input buffer
     self.input_buffer = data.DataBuffer(input_data_buffer.sample_rate, input_data_buffer.shape, input_data=input_data_buffer)
+    # we have to dublicate manually labels now -- here it's the same dimensions, that's okay
+    self.input_buffer.set_labels(input_data_buffer.labels)
     # default / crop data buffer size if needed
     if nb_values <= 0 or nb_values > input_data_buffer.queue_size:
       nb_values = input_data_buffer.queue_size
@@ -71,12 +75,22 @@ class GetMaxX(data.DataBuffer):
     self.input_buffer.add_callback(self)
 
   def __call__(self, all_values, new_values):
+    x = self.input_buffer.labels
+    # zero selected frequencies
+    for stop in self.stop_list:
+      start = stop[0]
+      end = stop[1]
+      # "-1" code for upper bound
+      if end == -1:
+        end = np.max(x)
+      # zero selected band
+      all_values[(abs(x) >= start) & (abs(x) <= end)] = 0
     # sort input by X then reverse order
     sorted_indices = np.argsort(all_values)[::-1]
     # retrieve values, select 
     sorted_labels = self.input_buffer.labels[sorted_indices]
     # replace values with corresponding subset
-    self.push_values(sorted_sabels[0:self.queue_size])
+    self.push_values(sorted_labels[0:self.queue_size])
 
 class TemporalFilter(data.SignalBuffer):
   """
@@ -175,7 +189,7 @@ class Morlet(data.DataBuffer):
     """
     scales=self.cw.getscales()
     # scale frequencies and correct with sample rate
-    freq=(self.cw.fourierwl*scales)*self.get_nb_temporal_points()/self.sample_rate
+    freq=1/(self.cw.fourierwl*scales)*self.sample_rate
     return freq
 
   def __call__(self, all_values, new_values):
@@ -186,3 +200,113 @@ class Morlet(data.DataBuffer):
     # revert to correct order values (or at least the same as the others)
     # FIXME: not working?
     self.push_values(values, revert=True)
+
+class MorletSpectrum(data.DataBuffer):
+  """
+  1D signal out of Mr Morlet
+  @param morlet: Morlet class
+  """
+  def __init__(self, morlet, attach_plot = False, name = "morlet spectrum"):
+    shape = (len(morlet.get_spectrum()),)
+    data.DataBuffer.__init__(self, morlet.sample_rate, shape, attach_plot = attach_plot, name = name)
+    self.set_labels(morlet.get_freq())
+    morlet.add_callback(self)
+    # FIXME: not great *at all* to have a direct ref...
+    self.morlet = morlet
+
+  def __call__(self, all_values, new_values):
+    values = self.morlet.get_spectrum()
+    self.push_values(values)
+
+class RemoveSlidingAverage(data.DataBuffer):
+    """
+    sustract to the average of the input to current sample
+    cf. @Bousefsaf2014
+    """
+    def __init__(self, input_data_buffer, attach_plot = False, name = "sliding average"):
+      self.input_buffer = data.DataBuffer(input_data_buffer.sample_rate, input_data_buffer.shape, input_data=input_data_buffer)
+      data.DataBuffer.__init__(self, self.input_buffer.sample_rate, self.input_buffer.shape, attach_plot = attach_plot, name = name)
+      self.input_buffer.add_callback(self)
+
+    def __call__(self, all_values, new_values):
+      """
+      a mean over input buffer and a push and we're good
+      """
+      new_values = new_values - np.mean(all_values)
+      self.push_values(new_values)
+
+class Derivative(data.DataBuffer):
+  """
+  Use numpy.diff to compute firt order derivative
+  """
+  def __init__(self, input_data_buffer, window_length = -1, attach_plot = False, name = "Derivative"):
+    # By default input buffer will be 1s long
+    if window_length <= 0:
+      window_length = 1
+    # FIXME: should ceil a bit everywhere like that probably
+    shape = (np.ceil(input_data_buffer.sample_rate*window_length),)
+    self.input_buffer = data.DataBuffer(input_data_buffer.sample_rate, shape, input_data=input_data_buffer)
+    
+    data.DataBuffer.__init__(self, self.input_buffer.sample_rate, shape, attach_plot = attach_plot, name = name)
+    self.input_buffer.add_callback(self)
+
+  def __call__(self, all_values, new_values):
+    x = self.input_buffer.labels
+    dx =  x[-1] - x[0]# np.diff(x)
+    dy = np.diff(all_values)
+    df = dy/dx
+    self.push_values(df)
+
+class CondidenceIndex(data.DataBuffer):
+  """
+  Very specific, implements confidence index described by Bousefsaf2015 (derivative and some log)
+  """
+  def __init__(self, input_data_buffer, window_length = 1, attach_plot = False, name = "Confidence index"):
+    # the alorithm work on 2x0.5 time windom, we want an even number
+    np_points = input_data_buffer.sample_rate
+    if np_points%2: # odd
+      np_points += 1
+    shape_input = (np_points,)
+    self.input_buffer = data.DataBuffer(input_data_buffer.sample_rate, shape_input, input_data=input_data_buffer)
+    
+    shape = (np.ceil(input_data_buffer.sample_rate*window_length),)
+    data.DataBuffer.__init__(self, self.input_buffer.sample_rate, shape, attach_plot = attach_plot, name = name)
+    self.input_buffer.add_callback(self)
+
+  def __call__(self, all_values, new_values):
+    half = len(all_values)/2
+    s = 0
+    for i in range (half):
+      # TODO: for sure in one numpy insrtuction we could do that
+      s+=np.abs(all_values[i+half]-all_values[i])
+    value=(10-np.log(s)**3)*10
+    self.push_value(value)
+
+class BPMSmoother(data.DataBuffer):
+  """
+  Simple algo to discard unrealistic values, check adjacent values
+  FIXME: may need perfect sync because of points number
+  """
+  def __init__(self, input_data_buffer, window_length = 1, attach_plot = False, name = "smoother"):
+    # the alorithm work on 5 time points
+    shape_input = 5,
+    self.input_buffer = data.DataBuffer(input_data_buffer.sample_rate, shape_input, input_data=input_data_buffer)
+    
+    shape = (np.ceil(input_data_buffer.sample_rate*window_length),)
+    data.DataBuffer.__init__(self, self.input_buffer.sample_rate, shape, attach_plot = attach_plot, name = name)
+    self.input_buffer.add_callback(self)
+
+  def __call__(self, all_values, new_values):
+    # take the middle, previous and next points, average if diff greater than 10 for direct neighbors, and 18 for the next 
+    m = all_values[2]
+    mp = all_values[1]
+    mn = all_values[3]
+    mpp = all_values[0]
+    mnn = all_values[4]
+    if abs(m-mp) > 10/60. or abs(m-mn) > 10/60.:
+        m = (mp+mn)/2
+    if abs(m-mpp) > 18/60. or abs(m-mnn) > 18/60.:
+        m = (mpp+mnn)/2
+    all_values[2]=m
+    value = m
+    self.push_value(value)
