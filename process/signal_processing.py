@@ -249,19 +249,24 @@ class CondidenceIndex(data.DataBuffer):
   """
   Very specific, implements confidence index described by Bousefsaf2015 (derivative and some log)
   """
-  def __init__(self, input_data_buffer, window_length = 1, attach_plot = False, name = "Derivative"):
-    # the alorithm work on 0.5 time windom
-    shape_input = (np.ceil(input_data_buffer.sample_rate*0.5),)
+  def __init__(self, input_data_buffer, window_length = 1, attach_plot = False, name = "Confidence index"):
+    # the alorithm work on 2x0.5 time windom, we want an even number
+    np_points = input_data_buffer.sample_rate
+    if np_points%2: # odd
+      np_points += 1
+    shape_input = (np_points,)
     self.input_buffer = data.DataBuffer(input_data_buffer.sample_rate, shape_input, input_data=input_data_buffer)
     
-    shape =  (np.ceil(input_data_buffer.sample_rate*window_length),)
+    shape = (np.ceil(input_data_buffer.sample_rate*window_length),)
     data.DataBuffer.__init__(self, self.input_buffer.sample_rate, shape, attach_plot = attach_plot, name = name)
     self.input_buffer.add_callback(self)
 
   def __call__(self, all_values, new_values):
-    x = self.input_buffer.labels
-    dx = np.diff(x)
-    dy = np.diff(all_values)
-    df_abs = np.abs(dy/dx)
-    values=(10-np.log(df_abs)**3)*10
-    self.push_values(values)
+    half = len(all_values)/2
+    s = 0
+    for i in range (half):
+      # TODO: for sure in one numpy insrtuction we could do that
+      s+=np.abs(all_values[i+half]-all_values[i])
+    value=(10-np.log(s)**3)*10
+    print value
+    self.push_value(value)

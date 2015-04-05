@@ -26,12 +26,7 @@ if __name__ == "__main__":
   # extract BPM (max freq)
   bpm_one = GetMaxX(morlet_spec, nb_values = 1)
   bpms_raw = SignalBuffer(window_length=5, input_data=bpm_one, attach_plot=True, name="BPM history")
-  # put in buffer
   
-  # confidence index: derivative on 0.5s window of raw signal
-  deriv = Derivative(green_chan, window_length=0.5, attach_plot=True)
-  conf_idx = CondidenceIndex(green_chan, window_length=10, attach_plot=True)
-
   ## testing normalization
   #slide_avg = RemoveSlidingAverage(green_chan, attach_plot=False)
   #norm = Invert(slide_avg, attach_plot=True)
@@ -41,6 +36,10 @@ if __name__ == "__main__":
   #max_morlet_norm = GetMaxX(morlet_spec_norm)
   #max_fft_norm = GetMaxX(fft_norm)
 
+  # confidence index: derivative on 0.5s window of raw signal
+  #deriv = Derivative(green_chan, window_length=0.5, attach_plot=True)
+  conf_idx = CondidenceIndex(green_chan, window_length=10, attach_plot=True)
+  
   # Will trigger plots if any
   plot.PlotLaunch()
   
