@@ -16,7 +16,7 @@ def init(cam):
   # min def, max FPS
   cv.SetCaptureProperty(cap,cv.CV_CAP_PROP_FRAME_WIDTH, 320)
   cv.SetCaptureProperty(cap,cv.CV_CAP_PROP_FRAME_HEIGHT, 240)
-  cv.SetCaptureProperty(cap,cv.CV_CAP_PROP_FPS, 1000)
+  cv.SetCaptureProperty(cap,cv.CV_CAP_PROP_FPS, MAGIC_FPS)
   
   return cap
 

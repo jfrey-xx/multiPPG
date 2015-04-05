@@ -23,8 +23,8 @@ if __name__ == "__main__":
   morlet_spec = MorletSpectrum(morlet, attach_plot=True)
   #max_fft = GetMaxX(fft)
 
-  # extract BPM (max freq)
-  bpm_one = GetMaxX(morlet_spec, nb_values = 1)
+  # extract BPM (max freq), pass-band between 0.6 and 4Hz
+  bpm_one = GetMaxX(morlet_spec, nb_values = 1, stop_list = [(0,0.6),(4,-1)])
   bpms_raw = SignalBuffer(window_length=5, input_data=bpm_one, attach_plot=True, name="BPM history")
   
   ## testing normalization
