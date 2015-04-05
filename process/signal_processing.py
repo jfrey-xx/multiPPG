@@ -175,7 +175,7 @@ class Morlet(data.DataBuffer):
     """
     scales=self.cw.getscales()
     # scale frequencies and correct with sample rate
-    freq=(self.cw.fourierwl*scales)*self.get_nb_temporal_points()/self.sample_rate
+    freq=1/(self.cw.fourierwl*scales)*self.sample_rate
     return freq
 
   def __call__(self, all_values, new_values):
