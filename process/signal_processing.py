@@ -205,3 +205,20 @@ class MorletSpectrum(data.DataBuffer):
   def __call__(self, all_values, new_values):
     values = self.morlet.get_spectrum()
     self.push_values(values)
+
+class RemoveSlidingAverage(data.DataBuffer):
+    """
+    sustract to the average of the input to current sample
+    cf. @Bousefsaf2014
+    """
+    def __init__(self, input_data_buffer, attach_plot = False, name = "sliding average"):
+      self.input_buffer = data.DataBuffer(input_data_buffer.sample_rate, input_data_buffer.shape, input_data=input_data_buffer)
+      data.DataBuffer.__init__(self, self.input_buffer.sample_rate, self.input_buffer.shape, attach_plot = attach_plot, name = name)
+      self.input_buffer.add_callback(self)
+
+    def __call__(self, all_values, new_values):
+      """
+      a mean over input buffer and a push and we're good
+      """
+      new_values = new_values - np.mean(all_values)
+      self.push_values(new_values)

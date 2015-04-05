@@ -15,8 +15,9 @@ if __name__ == "__main__":
   #filtered = TemporalFilter(green_chan, [(0, 0.6),(4,-1)], attach_plot=True)
   morlet = Morlet(green_chan, window_length=10, attach_plot=True, name="the green morlet")
   morlet_spec = MorletSpectrum(morlet, attach_plot=True)
-  max_morlet = GetMaxX(morlet_spec, attach_plot=True, name="maxx morlet")
-  max_fft = GetMaxX(fft, attach_plot=True, name="maxx fft")
+  max_morlet = GetMaxX(morlet_spec)
+  max_fft = GetMaxX(fft)
+  slide_avg = RemoveSlidingAverage(green_chan, attach_plot=True)
   # Will trigger plots if any
   plot.PlotLaunch()
   
