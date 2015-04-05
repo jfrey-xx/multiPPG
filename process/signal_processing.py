@@ -64,6 +64,8 @@ class GetMaxX(data.DataBuffer):
       raise NameError("NDimNotHandled")
     # init with a copy of input buffer
     self.input_buffer = data.DataBuffer(input_data_buffer.sample_rate, input_data_buffer.shape, input_data=input_data_buffer)
+    # we have to dublicate manually labels now -- here it's the same dimensions, that's okay
+    self.input_buffer.set_labels(input_data_buffer.labels)
     # default / crop data buffer size if needed
     if nb_values <= 0 or nb_values > input_data_buffer.queue_size:
       nb_values = input_data_buffer.queue_size
@@ -76,7 +78,7 @@ class GetMaxX(data.DataBuffer):
     # retrieve values, select 
     sorted_labels = self.input_buffer.labels[sorted_indices]
     # replace values with corresponding subset
-    self.push_values(sorted_sabels[0:self.queue_size])
+    self.push_values(sorted_labels[0:self.queue_size])
 
 class TemporalFilter(data.SignalBuffer):
   """
