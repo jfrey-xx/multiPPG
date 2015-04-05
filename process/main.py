@@ -39,6 +39,8 @@ if __name__ == "__main__":
   # confidence index: derivative on 0.5s window of raw signal
   #deriv = Derivative(green_chan, window_length=0.5, attach_plot=True)
   conf_idx = CondidenceIndex(green_chan, window_length=10, attach_plot=True)
+  # smooth BPM: discard impossible values
+  bpms_smooth = BPMSmoother(bpms_raw, window_length = 5, attach_plot=True, name="ultimate smoother")
   
   # Will trigger plots if any
   plot.PlotLaunch()
@@ -52,3 +54,4 @@ if __name__ == "__main__":
     #print "Norm -- max morlet:", max_morlet_norm.values[0], ", max fft:", max_fft_norm.values[0]
 
     print "bpm:", bpm_one.values[0]
+    print "bpm smoothed:", bpms_smooth.values[0]

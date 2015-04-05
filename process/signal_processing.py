@@ -60,7 +60,7 @@ class GetMaxX(data.DataBuffer):
     FIXME: 1D only at the moment
     stop_list: tuples of intervals to ignore (see TemporalFilter help)
   """
-  def __init__(self, input_data_buffer, nb_values = -1, stop_list = (), attach_plot = False, name = "max X"):
+  def __init__(self, input_data_buffer, nb_values = -1, stop_list = [], attach_plot = False, name = "max X"):
     if input_data_buffer.ndim > 1:
       raise NameError("NDimNotHandled")
     self.stop_list = stop_list
@@ -280,4 +280,33 @@ class CondidenceIndex(data.DataBuffer):
       # TODO: for sure in one numpy insrtuction we could do that
       s+=np.abs(all_values[i+half]-all_values[i])
     value=(10-np.log(s)**3)*10
+    self.push_value(value)
+
+class BPMSmoother(data.DataBuffer):
+  """
+  Simple algo to discard unrealistic values, check adjacent values
+  FIXME: may need perfect sync because of points number
+  """
+  def __init__(self, input_data_buffer, window_length = 1, attach_plot = False, name = "smoother"):
+    # the alorithm work on 5 time points
+    shape_input = 5,
+    self.input_buffer = data.DataBuffer(input_data_buffer.sample_rate, shape_input, input_data=input_data_buffer)
+    
+    shape = (np.ceil(input_data_buffer.sample_rate*window_length),)
+    data.DataBuffer.__init__(self, self.input_buffer.sample_rate, shape, attach_plot = attach_plot, name = name)
+    self.input_buffer.add_callback(self)
+
+  def __call__(self, all_values, new_values):
+    # take the middle, previous and next points, average if diff greater than 10 for direct neighbors, and 18 for the next 
+    m = all_values[2]
+    mp = all_values[1]
+    mn = all_values[3]
+    mpp = all_values[0]
+    mnn = all_values[4]
+    if abs(m-mp) > 10/60. or abs(m-mn) > 10/60.:
+        m = (mp+mn)/2
+    if abs(m-mpp) > 18/60. or abs(m-mnn) > 18/60.:
+        m = (mpp+mnn)/2
+    all_values[2]=m
+    value = m
     self.push_value(value)
