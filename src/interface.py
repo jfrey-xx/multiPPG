@@ -4,7 +4,7 @@ import utility
 import error
 import cv2
 import video
-
+import re
 
 value =''
 
@@ -61,7 +61,12 @@ def gui():
         length=len(tab)
         if not length==0:
             for i in range (0,length):
-                choice = Radiobutton(cam_frame, text=tab[i], variable=cam, value=i, command=None)
+                # /dev/videoXX may not be sequential, try to extrat dev number
+                try:
+                    cam_id = re.findall(r'\d+', tab[i])[0]
+                except:
+                    cam_id = i
+                choice = Radiobutton(cam_frame, text=tab[i], variable=cam, value=cam_id, command=None)
                 choice.config(font=utility.font_other,bg=utility.color1)
                 choice.pack(anchor=W)
         else :

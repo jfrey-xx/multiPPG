@@ -34,9 +34,6 @@ def transWebcamString():
 	"""Lets the user pick an external video device to use from /dev/video*"""
 	videodevs = ["/dev/" + x for x in os.listdir("/dev/") if x.startswith("video") ]
 	
-	if len(videodevs) == 1:
-		print "Found exactly one video device; using", videodevs[0]
-		return videodevs[0]
 	if len(videodevs) == 0:
 		raise Exception("Found zero video devices - try plugging in a webcam and checking for /dev/video0?")
  
