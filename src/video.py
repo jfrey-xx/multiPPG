@@ -14,15 +14,12 @@ import sample_rate
 import timeit
 import OneEuroFilter
 import webcam
+import config
 
 HAAR_CASCADE_PATH = "../sources/haarcascades/haarcascade_frontalface_alt.xml"
 e = multiprocessing.Event()
 p = None
 cascade = cv2.CascadeClassifier(HAAR_CASCADE_PATH)
-
-# number of values sent to streamer, ie number of persons
-# FIXME: bold move to say only one at the moment
-LSL_NB_CHANNELS = 1
 
 # set "1" to track face every frame, 2 every two frames and so on
 TRACKING_RATE=5
@@ -51,7 +48,7 @@ def init_euro_filters(nbUers, fps):
  # @brief detect_face use the cascade to calculate the square of the faces
  # @param frame The window create by OpenCV
  # @return faces This table contain the different square. 
- # The nomber of square depend of the number of users see by the webcam
+ # The nomber of square depend of the number of users see by the webcam -- capped by maximum set
  #  
 def detect_faces(frame):
     global frame_count
@@ -67,6 +64,8 @@ def detect_faces(frame):
         except cv.error:
             error.unknown_error()
     frame_count = frame_count + 1
+    if len(faces) > 0:
+        faces = faces[0:config.LSL_NB_CHANNELS]
     return faces
 
 # one static variable to remember last faces in case of tracking disruption, one small patch by default
@@ -153,14 +152,14 @@ def start(e,cam,tab,algo):
     fps = webcam.getFPS(cap)
     print "FPS:", fps
     
-    init_euro_filters(LSL_NB_CHANNELS,fps)
+    init_euro_filters(config.LSL_NB_CHANNELS,fps)
     
     r = [0, 0]
     g = [0, 0]
     b = [0, 0]
 
     # Init network streamer
-    streamer = streamerLSL.StreamerLSL(LSL_NB_CHANNELS,fps)
+    streamer = streamerLSL.StreamerLSL(config.LSL_NB_CHANNELS,fps)
 
     # Init the thread that will monitor FPS
     monit = sample_rate.PluginSampleRate()
@@ -169,7 +168,7 @@ def start(e,cam,tab,algo):
     while(True):
         
         # init streamed value with default (make a tuple out of it, as with dummy)
-        values = [0] * LSL_NB_CHANNELS,
+        values = [0] * config.LSL_NB_CHANNELS,
 
         # careful to what is caught, block to big could occult genuine bugs (I'm not saying I mispelled a variable, of course not!)
         try:
@@ -198,8 +197,8 @@ def start(e,cam,tab,algo):
             values = heartBeatLUV.process(frame)
         
         # clamp values to lsl channels number
-        lsl_values = numpy.zeros(LSL_NB_CHANNELS)
-        k = min(LSL_NB_CHANNELS, len(values))
+        lsl_values = numpy.zeros(config.LSL_NB_CHANNELS)
+        k = min(config.LSL_NB_CHANNELS, len(values))
         for i in range(k):
 	  lsl_values[i] = values[i]
         streamer(lsl_values)
