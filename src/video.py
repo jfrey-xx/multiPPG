@@ -150,7 +150,7 @@ def detectSkin(frame):
 # @param cam The number of the webcam must be used
 #  
 def start(e,cam,tab,algo):
-    WINDOW_NAME="Camera {0}".format(tab[cam])
+    WINDOW_NAME="Camera ID" + str(cam)
     cap = webcam.init(cam)
     
     cv.NamedWindow(WINDOW_NAME, cv.CV_WINDOW_AUTOSIZE)
