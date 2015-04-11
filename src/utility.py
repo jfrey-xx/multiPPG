@@ -4,16 +4,19 @@ from string import maketrans
 import sys
 from sys import platform as system
 
-# system represente l OS 
-# 
-# if _platform == "linux" or _platform == "linux2":
-    # linux
-# elif _platform == "darwin":
-    # OS X
-# elif _platform == "win32":
-    # Windows...
-# 
-# 
+import re
+
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+def natural_keys(text):
+    '''
+    alist.sort(key=natural_keys) sorts in human order
+    http://nedbatchelder.com/blog/200712/human_sorting.html
+    (See Toothy's implementation in the comments)
+    '''
+    return [ atoi(c) for c in re.split('(\d+)', text) ]
+
 
 font_title=('arial', 12)#,'italic')
 font_other=('arial', 10)#,'bold')
@@ -29,8 +32,8 @@ color_erreur ='#ff8282'
  #
 def transWebcamString():
 	"""Lets the user pick an external video device to use from /dev/video*"""
-	videodevs = sorted(["/dev/" + x for x in os.listdir("/dev/") if x.startswith("video") ])
-	#print videodevs
+	videodevs = ["/dev/" + x for x in os.listdir("/dev/") if x.startswith("video") ]
+	
 	if len(videodevs) == 1:
 		print "Found exactly one video device; using", videodevs[0]
 		return videodevs[0]
@@ -81,4 +84,5 @@ def transWebcamString():
 		camera_dev.close()
 	
 	chooseargs = ["%s - %s" % (videodevs[i], cameranames[i]) for i in xrange(len(videodevs))]
+	chooseargs.sort(key=natural_keys)
 	return chooseargs
