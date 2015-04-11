@@ -32,7 +32,7 @@ def process(frame):
     fitFace_stop =  (x+w, y+h)
     cv.Rectangle(frame, fitFace_start, fitFace_stop, fitFace_color, 2)
     
-    # duplicate region of interest and sho it
+    # duplicate region of interest and show it
     # FIXME: check that len(start:stop) > 0
     roi = frame[fitFace_start[1]:fitFace_stop[1], fitFace_start[0]:fitFace_stop[0]]
     
