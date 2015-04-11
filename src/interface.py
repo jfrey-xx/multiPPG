@@ -61,7 +61,7 @@ def gui():
         length=len(tab)
         if not length==0:
             for i in range (0,length):
-                choice = Radiobutton(cam_frame, text=tab[length-i-1], variable=cam, value=i, command=None)
+                choice = Radiobutton(cam_frame, text=tab[i], variable=cam, value=i, command=None)
                 choice.config(font=utility.font_other,bg=utility.color1)
                 choice.pack(anchor=W)
         else :
