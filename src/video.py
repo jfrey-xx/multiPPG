@@ -66,11 +66,6 @@ def detect_faces(frame):
             faces = cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=2, flags=cv.CV_HAAR_SCALE_IMAGE, minSize=(100, 100))
         except cv.error:
             error.unknown_error()
-
-        # lenght = len(faces) # Nomber of faces on camera
-        for (x,y,w,h) in faces:
-            cv.Rectangle(frame, (x,y), (x+w,y+h), 255)
-            cv.Rectangle(frame, (x+w/2, y+h/6), (x+w/2, y+h/6), (0, 0, 255), 2)
     frame_count = frame_count + 1
     return faces
 
