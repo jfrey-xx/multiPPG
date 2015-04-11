@@ -6,7 +6,7 @@ import numpy
 def process(frame):
   #  region of interest
   fitFace_color = (0, 255, 255)
-  faces = video.detect_faces_memory(frame)
+  faces = video.detect_faces_filter(frame)
   # we be filled with mean color of each face
   means = []
   # one ID for each face
