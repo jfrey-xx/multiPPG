@@ -1,9 +1,7 @@
 # Utilities for webcam
 
 import cv,cv2
-
-# everybody's a PSeye
-MAGIC_FPS = 125
+import config
 
 def init(cam):
   """
@@ -14,9 +12,9 @@ def init(cam):
   print "Init webcam:", cam
   cap = cv.CaptureFromCAM(cam)
   # min def, max FPS
-  cv.SetCaptureProperty(cap,cv.CV_CAP_PROP_FRAME_WIDTH, 320)
-  cv.SetCaptureProperty(cap,cv.CV_CAP_PROP_FRAME_HEIGHT, 240)
-  cv.SetCaptureProperty(cap,cv.CV_CAP_PROP_FPS, MAGIC_FPS)
+  cv.SetCaptureProperty(cap,cv.CV_CAP_PROP_FRAME_WIDTH, config.WEBCAM_WIDTH)
+  cv.SetCaptureProperty(cap,cv.CV_CAP_PROP_FRAME_HEIGHT, config.WEBCAM_HEIGHT)
+  cv.SetCaptureProperty(cap,cv.CV_CAP_PROP_FPS, config.MAGIC_FPS)
   
   return cap
 
@@ -24,5 +22,5 @@ def getFPS(cap):
   """
   Stub, return the number of FPS of the webcam
   """
-  return MAGIC_FPS
+  return config.MAGIC_FPS
   
