@@ -5,24 +5,16 @@ import cv, cv2
 import numpy
 from IheartBeat import *
 
-# This algo will try to implement in part the work discribed in [Frédéric Bousefsaf. Mesure sans contact de l’activité cardiaque par analyse du flux vidéo issu d’une caméra numérique : extraction de paramètres physiologiques et application à l’estimation du stress. Signal and Image processing. Université de Lorraine, 2014. French.]
-# * extract face
-# * stabilize with 1€ filter (new)
-# * extract skin pixels
-# * convert space to luv
-# * extract u component
-# * get u from skin pixels
-
 # enable or not separate window to show computations
-LUV_DEBUG = True
+DEBUG = True
 # we don't get any info about webcam yet, so we'll share one debug window per iteration of the algo for each face
-LUV_WINDOW_NAME="LUV_debug"
+WINDOW_NAME="UFUKNG_debug"
 
-class heartBeatLUV(IheartBeat):
+class heartBeatUfukNG:
   def __init__(self):
-    print "Init Luv"
+    print "starting Ufuk NG"
     
-  def process(self,frame):
+  def process(self, frame):
     #  region of interest
     fitFace_color = (255, 255, 0)
     faces = video.detect_faces_filter(frame)
@@ -47,10 +39,10 @@ class heartBeatLUV(IheartBeat):
       skinMask = video.detectSkin(roi)
       skin = cv2.bitwise_and(roi, roi, mask = skinMask)
       
-      if LUV_DEBUG:
+      if DEBUG:
 	#cv2.imshow(LUV_WINDOW_NAME+"_"+str(faceN), roi)
 	#cv2.imshow(LUV_WINDOW_NAME+"_skinMask_"+str(faceN), skinMask)
-	cv2.imshow(LUV_WINDOW_NAME+"_skin_"+str(faceN), skin)
+	cv2.imshow(WINDOW_NAME+"_skin_"+str(faceN), skin)
     
       # 8bit style
       # convert to luv
