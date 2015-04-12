@@ -66,7 +66,7 @@ def detect_faces(frame):
             error.unknown_error()
     frame_count = frame_count + 1
     if len(faces) > 0:
-        faces = faces[0:config.LSL_NB_CHANNELS]
+        faces = faces[0:config.NB_FACES]
     return faces
 
 # one static variable to remember last faces in case of tracking disruption, one small patch by default
@@ -154,7 +154,7 @@ def start(e,cam,tab,algo):
     print "FPS:", fps
     
     # init smooth tracking
-    init_euro_filters(config.LSL_NB_CHANNELS,fps)
+    init_euro_filters(config.NB_FACES,fps)
     
     # Init network streamer
     streamer = streamerLSL.StreamerLSL(config.LSL_NB_CHANNELS,fps)
