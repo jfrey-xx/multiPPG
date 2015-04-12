@@ -1,7 +1,9 @@
 import numpy as np
 from scipy.sparse import diags, eye
 from scipy.sparse.linalg import inv
+from scipy.sparse.linalg import splu
 from scipy.linalg import inv as inv2
+import scipy.signal
 
 def nextPow2(value):
     """
@@ -55,3 +57,8 @@ def detrend3(values):
   # same format as detrend()
   return np.asarray(((I- inv2(A.todense()))  * np.matrix(values).H).H)[0]
 
+def detrend4(values):
+  """
+  This one is easy, it's more for benchmark
+  """
+  return scipy.signal.detrend(values)

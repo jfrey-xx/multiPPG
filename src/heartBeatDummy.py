@@ -5,8 +5,9 @@ import numpy
 from IheartBeat import *
 
 class heartBeatDummy(IheartBeat):
-  def __init__(self):
-    print "Starting Dummy"
+  def __init__(self, *args, **kwargs):
+    self.name = "Dummy"
+    IheartBeat.__init__(self, args, kwargs)
     
   def process(self, frame):
     #  region of interest

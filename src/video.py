@@ -167,7 +167,7 @@ def start(e,cam,tab,algo):
     elif algo == 1:
 	algoHR = heartBeatLUV.heartBeatLUV()
     elif algo == 2:
-	algoHR = heartBeatUfukNG.heartBeatUfukNG()
+	algoHR = heartBeatUfukNG.heartBeatUfukNG(config.MAGIC_FPS)
     else:
 	print "Error: unknown algorithm"
 	raise

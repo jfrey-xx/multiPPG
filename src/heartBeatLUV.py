@@ -19,9 +19,10 @@ LUV_DEBUG = True
 LUV_WINDOW_NAME="LUV_debug"
 
 class heartBeatLUV(IheartBeat):
-  def __init__(self):
-    print "Init Luv"
-    
+  def __init__(self, **kwargs):
+    self.name = "Luv"
+    IheartBeat.__init__(self, kwargs)
+        
   def process(self,frame):
     #  region of interest
     fitFace_color = (255, 255, 0)

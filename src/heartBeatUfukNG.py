@@ -1,27 +1,36 @@
 # -*- coding: utf-8 -*-
-
+import sys; sys.path.append('../process') # help python find // files relative to this script
 import video # boo! import within an import! no choice if I want to change little
 import cv, cv2
 import numpy
 from IheartBeat import *
+# from process
+from data import *
+from utilities import *
+import plot
 
 # enable or not separate window to show computations
 DEBUG = True
 # we don't get any info about webcam yet, so we'll share one debug window per iteration of the algo for each face
 WINDOW_NAME="UFUKNG_debug"
 
-class heartBeatUfukNG:
-  def __init__(self):
-    print "starting Ufuk NG"
+class heartBeatUfukNG(IheartBeat):
+  def __init__(self, fps, *args, **kwargs):
+    self.name = "Ufuk NG"
+    self.fps = fps
+    IheartBeat.__init__(self, args, kwargs)
+    # buffers for the 3 components -- FIXME: only one face
+    self.R_chan = SignalBuffer(sample_rate=fps, window_length=3)
+    self.G_chan = SignalBuffer(sample_rate=fps, window_length=3)
+    self.B_chan = SignalBuffer(sample_rate=fps, window_length=3)
     
   def process(self, frame):
     #  region of interest
     fitFace_color = (255, 255, 0)
     faces = video.detect_faces_filter(frame)
-    # we be filled with mean color of each face
-    means = []
     # one ID for each face
     faceN = 0
+    
     # Now we can play with faces color!
     for (x,y,w,h) in faces:
       # narrower rectangle for effective face, show in green
@@ -40,26 +49,33 @@ class heartBeatUfukNG:
       skin = cv2.bitwise_and(roi, roi, mask = skinMask)
       
       if DEBUG:
-	#cv2.imshow(LUV_WINDOW_NAME+"_"+str(faceN), roi)
-	#cv2.imshow(LUV_WINDOW_NAME+"_skinMask_"+str(faceN), skinMask)
 	cv2.imshow(WINDOW_NAME+"_skin_"+str(faceN), skin)
-    
-      # 8bit style
-      # convert to luv
-      #roi_luv = cv2.cvtColor(roi, cv.CV_BGR2Luv)
-      # Compute average color over skin
-      #meanLUV = cv2.mean(roi_luv, mask=skinMask)
       
-      # convert to 32F and normalize -- should have less data loss
-      roi32F = numpy.array(roi, dtype=numpy.float32)/255.
-      # convert to luv
-      roi_luv = cv2.cvtColor(roi32F, cv2.cv.CV_BGR2Luv)
-      meanLUV = cv2.mean(roi_luv, mask=skinMask)
+      meanRGB = cv2.mean(roi, mask=skinMask)
       
       # get U channel
-      means.append(meanLUV[1])
+      self.R_chan.push_value(meanRGB[0])
+      self.G_chan.push_value(meanRGB[1])
+      self.B_chan.push_value(meanRGB[2])
       
       faceN = faceN+1
+      break # we're rude, don't care about more than 1 face
+    
+    # detrend
+    R_detrend = detrend(self.R_chan.values)
+    G_detrend = detrend(self.G_chan.values)
+    B_detrend = detrend(self.B_chan.values)
+    
+    # formula 2, aka algo from "Shadinrakar et al, used to stretch the RGB signal and combine the three color channels to give stronger resultant signal"
+    
+    X1 = R_detrend - G_detrend
+    X2 = R_detrend + G_detrend - 2*B_detrend
+    X1 = X1 - np.mean(X1)
+    X2 = X2 - np.mean(X2)
+    X2 = (np.std(X1)/np.std(X2))*X2
+    HB = X1 - X2
+    HB = HB / np.std(HB)
+    
     # next step: return as a value and make something out of it
-    return means
+    return [0]
 
