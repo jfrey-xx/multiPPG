@@ -310,3 +310,54 @@ class BPMSmoother(data.DataBuffer):
     all_values[2]=m
     value = m
     self.push_value(value)
+
+class Detrend(data.SignalBuffer):
+  """
+  Apply detrending algo to data
+  NB: threaded
+  FIXME: 1D only
+  """
+  def __init__(self, input_signal_buffer, window_length = -1, attach_plot = False, name = "Detrend"):
+    
+    if input_signal_buffer.ndim > 1:
+      raise NameError("NDimNotHandled")
+    # By default input buffer will be same length as the signal
+    if window_length <= 0:
+      window_length = input_signal_buffer.window_length
+      
+    self.input_buffer = data.SignalBuffer(window_length = window_length, input_data=input_signal_buffer)
+    
+    data.SignalBuffer.__init__(self, self.input_buffer.sample_rate, input_signal_buffer.window_length, attach_plot = attach_plot, name = name)
+    self.input_buffer.add_callback(self,threaded=True)
+
+  def __call__(self, all_values, new_values):
+    """
+    we need to detrend all values
+    """
+    self.push_values(detrend(all_values))
+    
+class Detrend4(data.SignalBuffer):
+  """
+  Apply detrending algo to data
+  NB: threaded
+  FIXME: 1D only
+  """
+  def __init__(self, input_signal_buffer, window_length = -1, attach_plot = False, name = "Detrend"):
+    
+    if input_signal_buffer.ndim > 1:
+      raise NameError("NDimNotHandled")
+    # By default input buffer will be same length as the signal
+    if window_length <= 0:
+      window_length = input_signal_buffer.window_length
+      
+    self.input_buffer = data.SignalBuffer(window_length = window_length, input_data=input_signal_buffer)
+    
+    data.SignalBuffer.__init__(self, self.input_buffer.sample_rate, input_signal_buffer.window_length, attach_plot = attach_plot, name = name)
+    self.input_buffer.add_callback(self,threaded=True)
+
+  def __call__(self, all_values, new_values):
+    """
+    we need to detrend all values
+    """
+    self.push_values(detrend4(all_values))
+    

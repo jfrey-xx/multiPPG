@@ -31,6 +31,8 @@ class heartBeatUfukNG(IheartBeat):
     # one ID for each face
     faceN = 0
     
+    meanRGB = []
+    
     # Now we can play with faces color!
     for (x,y,w,h) in faces:
       # narrower rectangle for effective face, show in green
@@ -62,20 +64,20 @@ class heartBeatUfukNG(IheartBeat):
       break # we're rude, don't care about more than 1 face
     
     # detrend
-    R_detrend = detrend(self.R_chan.values)
-    G_detrend = detrend(self.G_chan.values)
-    B_detrend = detrend(self.B_chan.values)
+    #R_detrend = detrend(self.R_chan.values)
+    #G_detrend = detrend(self.G_chan.values)
+    #B_detrend = detrend(self.B_chan.values)
     
     # formula 2, aka algo from "Shadinrakar et al, used to stretch the RGB signal and combine the three color channels to give stronger resultant signal"
     
-    X1 = R_detrend - G_detrend
-    X2 = R_detrend + G_detrend - 2*B_detrend
-    X1 = X1 - np.mean(X1)
-    X2 = X2 - np.mean(X2)
-    X2 = (np.std(X1)/np.std(X2))*X2
-    HB = X1 - X2
-    HB = HB / np.std(HB)
+    #X1 = R_detrend - G_detrend
+    #X2 = R_detrend + G_detrend - 2*B_detrend
+    #X1 = X1 - np.mean(X1)
+    #X2 = X2 - np.mean(X2)
+    #X2 = (np.std(X1)/np.std(X2))*X2
+    #HB = X1 - X2
+    #HB = HB / np.std(HB)
     
     # next step: return as a value and make something out of it
-    return [0]
+    return meanRGB
 
