@@ -337,5 +337,32 @@ class Detrend1D(data.DataBuffer):
     """
     self.push_values(detrend(all_values))
     
+class Detrend2D(data.Data2DBuffer):
+  """
+  Apply detrending algo to data in row
+  NB: threaded
+  """
+  def __init__(self, input_data_buffer, window_length = -1, attach_plot = False, name = "Detrend"):
+  
+    if input_data_buffer.ndim != 2:
+      raise NameError("NDimNotHandled")
+    
+    if window_length < 0:
+      shape = input_data_buffer.shape
+    else:
+      nb_samples = np.ceil(input_data_buffer.sample_rate*window_length)
+      shape = input_data_buffer.shape[0],nb_samples,
+    
+    self.input_buffer = data.Data2DBuffer(input_data_buffer.sample_rate, shape, input_data=input_data_buffer)
+    data.Data2DBuffer.__init__(self, input_data_buffer.sample_rate, shape, attach_plot = attach_plot, name = name)
+    self.input_buffer.add_callback(self,threaded=True)
 
+  def __call__(self, all_values, new_values):
+    """
+    we need to detrend all values
+    """
+    for i in range(len(all_values)):
+      all_values[i] = detrend(all_values[i])
+    self.push_values(all_values)
+    
     

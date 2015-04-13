@@ -189,34 +189,36 @@ class Data2DBuffer(DataBuffer):
 
     DataBuffer.__init__(self, sample_rate, shape, input_data = input_data, attach_plot = attach_plot, name = name)
 
-  def push_value(self, value, **kwargs):
+  def push_value(self, value):
       """
       Should not be called anymore...
       """
       print "Error: cannot give one value to multi-dimensional data."
-      raise
+      raise NameError("WrongCalling")
     
-  def push_values(self, values, **kwargs):
+  def push_values(self, values, revert=False):
     """
     override DataBuffer.push_values to push each line separately
     """
-    if len(values.shape) != 2:
-      print "Error: must provide 2D data"
-      raise
     
-    if values.shape[0] != self.values.shape[0]:
-      print "Error: incoming values must posess as many rows as this buffer"
+    # if we have 1D array, transform to columns
+    if len(values.shape) == 1:
+      values.shape = values.shape[0],1
+
+    if len(values.shape) != 2 or values.shape[0] != self.shape[0]:
+      print "Error: must provide 2D data and matching rows (or 1D and as many values as rows)"
       print "Incoming shape:", values.shape, " buffer shape:", self.values.shape
+      raise NameError("BadShape")
     
     nb_values = values.shape[1]
-    
+
     # One goes out, one goes in
     if revert:
-      self.values = np.roll(self.values, nb_values,2)
+      self.values = np.roll(self.values, nb_values,1)
       self.values[:,0:nb_values] = values
     else:
-      self.values = np.roll(self.values, -nb_values,2)
-      self.values[:-len(values)] = values
+      self.values = np.roll(self.values, -nb_values, 1)
+      self.values[:,-nb_values:] = values
 
     # Trigger external functions if needed
     self.nudge_callback(self.values, values)

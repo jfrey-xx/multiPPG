@@ -16,9 +16,9 @@ if __name__ == "__main__":
   
   # 3 channels of 10 seconds
   rgb_shape = 3,reader.getSamplingRate(0)*10
-  rgb_chan = DataBuffer(reader.getSamplingRate(0), rgb_shape)
+  rgb_chan = Data2DBuffer(reader.getSamplingRate(0), rgb_shape)
   
-  rgb_detrend = Detrend1D(red_chan, attach_plot=True)
+  rgb_detrend = Detrend2D(rgb_chan, attach_plot=True)
   #red_detrend4 = Detrend4(red_chan, attach_plot=True, name="red detrend")
   #green_detrend = SignalBuffer(reader.getSamplingRate(0), window_length = 10, attach_plot=True, name="green detrend")
   #blue_detrend = SignalBuffer(reader.getSamplingRate(0), window_length = 10, attach_plot=True, name="blue detrend")
