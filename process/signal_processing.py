@@ -311,23 +311,24 @@ class BPMSmoother(data.DataBuffer):
     value = m
     self.push_value(value)
 
-class Detrend(data.SignalBuffer):
+class Detrend1D(data.DataBuffer):
   """
-  Apply detrending algo to data
+  Apply detrending algo to data in row
   NB: threaded
-  FIXME: 1D only
   """
-  def __init__(self, input_signal_buffer, window_length = -1, attach_plot = False, name = "Detrend"):
-    
-    if input_signal_buffer.ndim > 1:
+  def __init__(self, input_data_buffer, window_length = -1, attach_plot = False, name = "Detrend"):
+  
+    if input_data_buffer.ndim != 1:
       raise NameError("NDimNotHandled")
-    # By default input buffer will be same length as the signal
-    if window_length <= 0:
-      window_length = input_signal_buffer.window_length
-      
-    self.input_buffer = data.SignalBuffer(window_length = window_length, input_data=input_signal_buffer)
     
-    data.SignalBuffer.__init__(self, self.input_buffer.sample_rate, input_signal_buffer.window_length, attach_plot = attach_plot, name = name)
+    if window_length < 0:
+      shape = input_data_buffer.shape
+    else:
+      nb_samples = np.ceil(input_data_buffer.sample_rate*window_length)
+      shape = nb_samples,
+    
+    self.input_buffer = data.DataBuffer(input_data_buffer.sample_rate, shape, input_data=input_data_buffer)
+    data.DataBuffer.__init__(self, input_data_buffer.sample_rate, shape, attach_plot = attach_plot, name = name)
     self.input_buffer.add_callback(self,threaded=True)
 
   def __call__(self, all_values, new_values):
@@ -336,28 +337,5 @@ class Detrend(data.SignalBuffer):
     """
     self.push_values(detrend(all_values))
     
-class Detrend4(data.SignalBuffer):
-  """
-  Apply detrending algo to data
-  NB: threaded
-  FIXME: 1D only
-  """
-  def __init__(self, input_signal_buffer, window_length = -1, attach_plot = False, name = "Detrend"):
-    
-    if input_signal_buffer.ndim > 1:
-      raise NameError("NDimNotHandled")
-    # By default input buffer will be same length as the signal
-    if window_length <= 0:
-      window_length = input_signal_buffer.window_length
-      
-    self.input_buffer = data.SignalBuffer(window_length = window_length, input_data=input_signal_buffer)
-    
-    data.SignalBuffer.__init__(self, self.input_buffer.sample_rate, input_signal_buffer.window_length, attach_plot = attach_plot, name = name)
-    self.input_buffer.add_callback(self,threaded=True)
 
-  def __call__(self, all_values, new_values):
-    """
-    we need to detrend all values
-    """
-    self.push_values(detrend4(all_values))
     

@@ -168,4 +168,61 @@ class SignalBuffer(DataBuffer):
     first_point_time = self.last_point_time - self.queue_size/float(self.sample_rate)
     labels = np.arange(first_point_time, self.last_point_time, abs(self.last_point_time - first_point_time) / float(self.queue_size))
     DataBuffer.set_labels(self, labels, **kwargs)
+
+class Data2DBuffer(DataBuffer):
+  """
+  Contains a 2D signal, pushed values have to match the number of columns
+  TODO: factorize with Data (add an option upon creation)
+  """
+  
+  def __init__(self, sample_rate, shape, input_data = None, attach_plot = False, name="data2D"):
+
+    if not input_data and sample_rate <= 0: 
+      print "ERROR: no input_data set and sample rate not given or negative."
+      raise NameError('NoSampleRate')
     
+    if input_data and input_data.ndim != 2:
+      raise NameError("NDimNotHandled")
+    
+    if len(shape) != 2:
+      raise NameError("NDimNotHandled")
+
+    DataBuffer.__init__(self, sample_rate, shape, input_data = input_data, attach_plot = attach_plot, name = name)
+
+  def push_value(self, value, **kwargs):
+      """
+      Should not be called anymore...
+      """
+      print "Error: cannot give one value to multi-dimensional data."
+      raise
+    
+  def push_values(self, values, **kwargs):
+    """
+    override DataBuffer.push_values to push each line separately
+    """
+    if len(values.shape) != 2:
+      print "Error: must provide 2D data"
+      raise
+    
+    if values.shape[0] != self.values.shape[0]:
+      print "Error: incoming values must posess as many rows as this buffer"
+      print "Incoming shape:", values.shape, " buffer shape:", self.values.shape
+    
+    nb_values = values.shape[1]
+    
+    # One goes out, one goes in
+    if revert:
+      self.values = np.roll(self.values, nb_values,2)
+      self.values[:,0:nb_values] = values
+    else:
+      self.values = np.roll(self.values, -nb_values,2)
+      self.values[:-len(values)] = values
+
+    # Trigger external functions if needed
+    self.nudge_callback(self.values, values)
+    # Update plot data once it's created
+    if self.plot:
+      self.plot.set_values(self.values)    # Push to output
+    for output in self.outputs:
+      output.push_values(values, revert=revert)
+
