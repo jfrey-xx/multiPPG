@@ -351,7 +351,7 @@ class Detrend2D(data.Data2DBuffer):
       shape = input_data_buffer.shape
     else:
       nb_samples = np.ceil(input_data_buffer.sample_rate*window_length)
-      shape = input_data_buffer.shape[0],nb_samples,
+      shape = input_data_buffer.shape[0],nb_samples
     
     self.input_buffer = data.Data2DBuffer(input_data_buffer.sample_rate, shape, input_data=input_data_buffer)
     data.Data2DBuffer.__init__(self, input_data_buffer.sample_rate, shape, attach_plot = attach_plot, name = name)
@@ -365,4 +365,49 @@ class Detrend2D(data.Data2DBuffer):
       all_values[i] = detrend(all_values[i])
     self.push_values(all_values)
     
+class OrthogonalRGB(data.DataBuffer):
+  """
+  Compute orthogonal vector of RGB, as in paper "Improving Motion Robustness of Contact-less Monitoring of HeartUsing Video Analysis", Pratik Sahindrakar, 2011 (cited by Ufuk 2015).
+  
+  Input buffer: Data2DBuffer, 3 channels (RGB)
+  """
+  
+  def __init__(self, input_data_buffer, window_length = -1, attach_plot = False, name = "Detrend"):
+  
+    if input_data_buffer.ndim != 2:
+      raise NameError("NDimNotHandled")
+    
+    if input_data_buffer.shape[0] != 3:
+      raise NameError("NChanNotHandled")
+    
+    if window_length < 0:
+      shape_buffer = input_data_buffer.shape
+      shape = input_data_buffer.shape[1],
+    else:
+      nb_samples = np.ceil(input_data_buffer.sample_rate*window_length)
+      shape_buffer = input_data_buffer.shape[0],nb_samples
+      shape = nb_samples,
+    
+    self.input_buffer = data.Data2DBuffer(input_data_buffer.sample_rate, shape_buffer, input_data=input_data_buffer)
+    data.DataBuffer.__init__(self, input_data_buffer.sample_rate, shape, attach_plot = attach_plot, name = name)
+    self.input_buffer.add_callback(self)
+
+  def __call__(self, all_values, new_values):
+    """
+    we need to detrend all values
+    """
+    print "ortho"
+    R = all_values[0]
+    G = all_values[1]
+    B = all_values[2]
+    
+    X1 = R - G
+    X2 = R + G - 2*B
+    X1 = X1 - np.mean(X1)
+    X2 = X2 - np.mean(X2)
+    X2 = (np.std(X1)/np.std(X2))*X2
+    HB = X1 - X2
+    HB = HB / np.std(HB)
+    
+    self.push_values(HB)
     

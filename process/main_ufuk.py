@@ -9,27 +9,26 @@ if __name__ == "__main__":
   for i in range(reader.nb_streams):
     print reader.getSamplingRate(i), "Hz for channel", i
   
-  # New holder for green channel
-  red_chan = SignalBuffer(reader.getSamplingRate(0), window_length = 10, attach_plot=True, name="red")
-  #green_chan = SignalBuffer(reader.getSamplingRate(0), window_length = 10, attach_plot=True, name="green")
-  #blue_chan = SignalBuffer(reader.getSamplingRate(0), window_length = 10, attach_plot=True, name="blue")
+  global_window_length = 5
   
-  # 3 channels of 10 seconds
-  rgb_shape = 3,reader.getSamplingRate(0)*10
+  # New holder for green channel
+  #red_chan = SignalBuffer(reader.getSamplingRate(0), window_length = global_window_length, attach_plot=True, name="red")
+  #green_chan = SignalBuffer(reader.getSamplingRate(0), window_length = global_window_length, attach_plot=True, name="green")
+  #blue_chan = SignalBuffer(reader.getSamplingRate(0), window_length = global_window_length, attach_plot=True, name="blue")
+  
+  # 3 channels of 5 seconds
+  rgb_shape = 3,reader.getSamplingRate(0)*global_window_length
   rgb_chan = Data2DBuffer(reader.getSamplingRate(0), rgb_shape)
   
-  rgb_detrend = Detrend2D(rgb_chan, attach_plot=True)
-  #red_detrend4 = Detrend4(red_chan, attach_plot=True, name="red detrend")
-  #green_detrend = SignalBuffer(reader.getSamplingRate(0), window_length = 10, attach_plot=True, name="green detrend")
-  #blue_detrend = SignalBuffer(reader.getSamplingRate(0), window_length = 10, attach_plot=True, name="blue detrend")
- 
+  rgb_detrend = Detrend2D(rgb_chan)
+  rgb_ortho =  OrthogonalRGB(rgb_detrend, attach_plot=True, name="rgb_detrend_ortho")
+  
   # Will trigger plots if any
   plot.PlotLaunch()
   
   while True:
     sample, timestamp = reader()
-    red_chan.push_value(sample[0])
-    rgb_chan.push_values(np.array(sample))
+    #red_chan.push_value(sample[0])
     #green_chan.push_value(sample[1])
     #blue_chan.push_value(sample[2])
-
+    rgb_chan.push_values(np.array(sample))
