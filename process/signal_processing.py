@@ -311,38 +311,51 @@ class BPMSmoother(data.DataBuffer):
     value = m
     self.push_value(value)
 
-class Detrend1D(data.DataBuffer):
+class Detrend1D(data.SignalBuffer):
   """
   Apply detrending algo to data in row
-  NB: threaded
+  Fast: use scpipy detrend
+  NB: threaded if fast == False
   """
-  def __init__(self, input_data_buffer, window_length = -1, attach_plot = False, name = "Detrend"):
+  def __init__(self, input_data_buffer, fast=False, window_length = -1, attach_plot = False, name = "Detrend"):
   
     if input_data_buffer.ndim != 1:
       raise NameError("NDimNotHandled")
     
     if window_length < 0:
       shape = input_data_buffer.shape
+      window_length = np.ceil(input_data_buffer.shape[0]/input_data_buffer.sample_rate)
     else:
       nb_samples = np.ceil(input_data_buffer.sample_rate*window_length)
       shape = nb_samples,
     
+    self.fast = fast
+
     self.input_buffer = data.DataBuffer(input_data_buffer.sample_rate, shape, input_data=input_data_buffer)
-    data.DataBuffer.__init__(self, input_data_buffer.sample_rate, shape, attach_plot = attach_plot, name = name)
-    self.input_buffer.add_callback(self,threaded=True)
+    data.SignalBuffer.__init__(self, input_data_buffer.sample_rate, window_length, attach_plot = attach_plot, name = name)
+    
+    if fast:
+      self.input_buffer.add_callback(self)
+    else:
+      self.input_buffer.add_callback(self,threaded=True)
 
   def __call__(self, all_values, new_values):
     """
     we need to detrend all values
+    Fast: use scpipy detrend
+    NB: threaded if fast == False
     """
-    self.push_values(detrend(all_values))
+    if self.fast:
+      self.push_values(detrend4(all_values))
+    else:
+      self.push_values(detrend(all_values))
     
 class Detrend2D(data.Data2DBuffer):
   """
   Apply detrending algo to data in row
   NB: threaded
   """
-  def __init__(self, input_data_buffer, window_length = -1, attach_plot = False, name = "Detrend"):
+  def __init__(self, input_data_buffer, fast=False, window_length = -1, attach_plot = False, name = "Detrend"):
   
     if input_data_buffer.ndim != 2:
       raise NameError("NDimNotHandled")
@@ -353,16 +366,25 @@ class Detrend2D(data.Data2DBuffer):
       nb_samples = np.ceil(input_data_buffer.sample_rate*window_length)
       shape = input_data_buffer.shape[0],nb_samples
     
+    self.fast = fast
+
     self.input_buffer = data.Data2DBuffer(input_data_buffer.sample_rate, shape, input_data=input_data_buffer)
     data.Data2DBuffer.__init__(self, input_data_buffer.sample_rate, shape, attach_plot = attach_plot, name = name)
-    self.input_buffer.add_callback(self,threaded=True)
+
+    if fast:
+      self.input_buffer.add_callback(self)
+    else:
+      self.input_buffer.add_callback(self,threaded=True)
 
   def __call__(self, all_values, new_values):
     """
     we need to detrend all values
     """
     for i in range(len(all_values)):
-      all_values[i] = detrend(all_values[i])
+      if self.fast:
+        all_values[i] = detrend4(all_values[i])
+      else:
+        all_values[i] = detrend(all_values[i])
     self.push_values(all_values)
     
 class OrthogonalRGB(data.DataBuffer):
@@ -396,7 +418,6 @@ class OrthogonalRGB(data.DataBuffer):
     """
     we need to detrend all values
     """
-    print "ortho"
     R = all_values[0]
     G = all_values[1]
     B = all_values[2]
