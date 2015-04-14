@@ -4,6 +4,10 @@ MAGIC_FPS = 30
 WEBCAM_WIDTH = 640
 WEBCAM_HEIGHT = 480
 
-# number of values sent to streamer, ie number of persons
+# max number of values sent to streamer
+# FIXME: varying depending on algo
+LSL_NB_CHANNELS = 3
+
+# Number of ursers
 # FIXME: bold move to say only one at the moment
-LSL_NB_CHANNELS = 1
+NB_FACES=1

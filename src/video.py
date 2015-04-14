@@ -6,7 +6,7 @@ import error
 import sys
 import cv2
 import cv
-import heartBeatPPG, heartBeatDummy, heartBeatLUV
+import heartBeatDummy, heartBeatLUV, heartBeatUfukNG
 import numpy
 import interface
 import streamerLSL
@@ -56,6 +56,7 @@ def detect_faces(frame):
     if not frame_count % TRACKING_RATE:
         # convert frame to cv2 format, and to B&W to speedup processsing (this cv/cv2 mix drives me crazy)
         # FIXME: prone to bug if webcam already B&W
+        # TODO: not multithread safe for TRACKING_RATE
         gray = cv2.cvtColor(numpy.array(cv.GetMat(frame)), cv2.COLOR_BGR2GRAY)
 
         try:
@@ -65,7 +66,7 @@ def detect_faces(frame):
             error.unknown_error()
     frame_count = frame_count + 1
     if len(faces) > 0:
-        faces = faces[0:config.LSL_NB_CHANNELS]
+        faces = faces[0:config.NB_FACES]
     return faces
 
 # one static variable to remember last faces in case of tracking disruption, one small patch by default
@@ -152,14 +153,24 @@ def start(e,cam,tab,algo):
     fps = webcam.getFPS(cap)
     print "FPS:", fps
     
-    init_euro_filters(config.LSL_NB_CHANNELS,fps)
+    # init smooth tracking
+    init_euro_filters(config.NB_FACES,fps)
     
-    r = [0, 0]
-    g = [0, 0]
-    b = [0, 0]
-
     # Init network streamer
     streamer = streamerLSL.StreamerLSL(config.LSL_NB_CHANNELS,fps)
+    
+    algoHR = None
+    
+    ######################## Algo CHOICE #########################
+    if algo == 0:
+	algoHR = heartBeatDummy.heartBeatDummy()
+    elif algo == 1:
+	algoHR = heartBeatLUV.heartBeatLUV()
+    elif algo == 2:
+	algoHR = heartBeatUfukNG.heartBeatUfukNG(config.MAGIC_FPS)
+    else:
+	print "Error: unknown algorithm"
+	raise
 
     # Init the thread that will monitor FPS
     monit = sample_rate.PluginSampleRate()
@@ -177,25 +188,9 @@ def start(e,cam,tab,algo):
         except Exception : # V4L error ... [TODO] VIDIOC_DQBUF
             error.webcam_error()
             break
-
-######################## Algo CHOICE #########################
-        if algo == 0:
-            print "Algo : PPG"
-            toto='coucou'
-            sendToInterface(toto)
-            # skin = detectSkin(frame)
-            # heartBeatPPG.ppgFunction(r, g, b, face, frame)
-        if algo == 1:
-            print "Algo : Eularian"
-        if algo == 2:
-            #print "Algo : Dummy"
-            #sendToInterface("dummy") # what 4?
-            values = heartBeatDummy.process(frame)
-        if algo == 3:
-            #print "Algo : Dummy"
-            #sendToInterface("dummy") # what 4?
-            values = heartBeatLUV.process(frame)
         
+	values = algoHR.process(frame)
+
         # clamp values to lsl channels number
         lsl_values = numpy.zeros(config.LSL_NB_CHANNELS)
         k = min(config.LSL_NB_CHANNELS, len(values))
@@ -228,5 +223,3 @@ def stop():
     e.set()
     p.join()
     
-def sendToInterface(test):
-    interface.actualiseLabel(test)

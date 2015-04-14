@@ -97,19 +97,15 @@ def gui():
     algo_label.config(font=utility.font_title,bg=utility.color1)
     algo_label.pack(anchor=W)
 
-    algochoice=Radiobutton(algo_frame, text="PPG", variable=algo, value=0, command=None)
-    algochoice.config(bg=utility.color1)
-    algochoice.pack(anchor=W)
-
-    algochoice=Radiobutton(algo_frame, text="Eularian", variable=algo, value=1, command=None)
-    algochoice.config(bg=utility.color1)
-    algochoice.pack(anchor=W)
-
-    algochoice=Radiobutton(algo_frame, text="Dummy", variable=algo, value=2, command=None)
+    algochoice=Radiobutton(algo_frame, text="Dummy", variable=algo, value=0, command=None)
     algochoice.config(bg=utility.color1)
     algochoice.pack(anchor=W)
     
-    algochoice=Radiobutton(algo_frame, text="LUV", variable=algo, value=3, command=None)
+    algochoice=Radiobutton(algo_frame, text="LUV", variable=algo, value=1, command=None)
+    algochoice.config(bg=utility.color1)
+    algochoice.pack(anchor=W)
+    
+    algochoice=Radiobutton(algo_frame, text="Ufuk NG", variable=algo, value=2, command=None)
     algochoice.config(bg=utility.color1)
     algochoice.pack(anchor=W)
     
