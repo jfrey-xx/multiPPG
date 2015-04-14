@@ -332,11 +332,11 @@ class CondidenceIndex(data.DataBuffer):
 
 class BPMSmoother(data.DataBuffer):
   """
-  Simple algo to discard unrealistic values, check adjacent values
+  Simple algo to discard unrealistic values, check adjacent values (taken from @Bousefsaf2014)
   FIXME: may need perfect sync because of points number
   """
   def __init__(self, input_data_buffer, window_length = 1, attach_plot = False, name = "smoother"):
-    # the alorithm work on 5 time points
+    # the algorithm work on 5 time points
     shape_input = 5,
     self.input_buffer = data.DataBuffer(input_data_buffer.sample_rate, shape_input, input_data=input_data_buffer)
     
@@ -358,6 +358,27 @@ class BPMSmoother(data.DataBuffer):
     all_values[2]=m
     value = m
     self.push_value(value)
+
+class SlidingAverage(data.DataBuffer):
+  """
+  Compute a sliding average. NB: will flatten over time, ie last dimension of input array -- input shape is kept
+  """
+  def __init__(self, input_data_buffer, sliding_window = 1, window_length = 1, attach_plot = False, name = "sliding average"):
+    """
+    sliding_window: size of the window onto which make average (s))
+    """
+    # compute sliding window size (change dimensions in shape)
+    shape_input = input_data_buffer.shape[:-1] + (input_data_buffer.sample_rate * sliding_window,)
+    self.input_buffer = data.DataBuffer(input_data_buffer.sample_rate, shape_input, input_data=input_data_buffer)
+    
+    # flat over temporal dimension but retain history
+    shape =  input_data_buffer.shape[:-1] + (input_data_buffer.sample_rate * window_length,)
+    data.DataBuffer.__init__(self, self.input_buffer.sample_rate, shape, attach_plot = attach_plot, name = name)
+    self.input_buffer.add_callback(self)
+
+  def __call__(self, all_values, new_values):
+    values = np.mean(all_values, axis=all_values.ndim-1, keepdims=True)
+    self.push_values(values)
 
 class Detrend1D(data.SignalBuffer):
   """
@@ -401,7 +422,7 @@ class Detrend1D(data.SignalBuffer):
 class Detrend2D(data.Data2DBuffer):
   """
   Apply detrending algo to data in row
-  NB: threaded
+  NB: threaded if fast == False
   """
   def __init__(self, input_data_buffer, fast=False, window_length = -1, attach_plot = False, name = "Detrend"):
   
