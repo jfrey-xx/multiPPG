@@ -80,7 +80,7 @@ class PlotLaunch(Thread):
       if canvas.ndim == 1:
         plot = cls.plots[canvas.id]
         # do not care about X axis if no info about it
-        if  canvas.labels == None:
+        if  canvas.labels is None:
           plot.setData(canvas.values)
         else:
           plot.setData(y=canvas.values, x=canvas.labels)
