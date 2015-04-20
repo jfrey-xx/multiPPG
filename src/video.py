@@ -16,7 +16,7 @@ import OneEuroFilter
 import webcam
 import config
 
-HAAR_CASCADE_PATH = "../sources/haarcascades/haarcascade_frontalface_alt.xml"
+HAAR_CASCADE_PATH = "../external/haarcascades/haarcascade_frontalface_alt.xml"
 e = multiprocessing.Event()
 p = None
 cascade = cv2.CascadeClassifier(HAAR_CASCADE_PATH)
