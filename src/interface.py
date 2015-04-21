@@ -12,7 +12,7 @@ value =''
 # @brief Send to video.start the numero of the cam used.
 #  
 def sendCam():
-    video.start_proc(cam.get(),tab,algo.get())
+    video.start_proc(cam.get(),algo.get())
 
 def actualiseLabel(value):
     print value_label

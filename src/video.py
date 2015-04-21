@@ -144,7 +144,7 @@ def detectSkin(frame):
 # @brief The fonction start allows the begining of the capture by OpenCV
 # @param cam The number of the webcam must be used
 #  
-def start(e,cam,tab,algo):
+def start(e,cam,algo):
     WINDOW_NAME="Camera ID" + str(cam)
     cap = webcam.init(cam)
     
@@ -212,9 +212,9 @@ def start(e,cam,tab,algo):
             break
 
 
-def start_proc(cam,tab,algo):
+def start_proc(cam,algo):
     global p
-    p = multiprocessing.Process(target=start, args=(e,cam,tab,algo))
+    p = multiprocessing.Process(target=start, args=(e,cam,algo))
     p.start()
 
 
