@@ -144,7 +144,7 @@ def detectSkin(frame):
 # @brief The fonction start allows the begining of the capture by OpenCV
 # @param cam The number of the webcam must be used
 #  
-def start(e,cam,algo):
+def start(e,cam,algo,userID):
     WINDOW_NAME="Camera ID" + str(cam)
     cap = webcam.init(cam)
     
@@ -170,7 +170,7 @@ def start(e,cam,algo):
 	algoHR = heartBeatUfukNG.heartBeatUfukNG(config.MAGIC_FPS)
     else:
 	print "Error: unknown algorithm"
-	raise
+	return
 
     # Init the thread that will monitor FPS
     monit = sample_rate.PluginSampleRate()
@@ -212,13 +212,23 @@ def start(e,cam,algo):
             break
 
 
-def start_proc(cam,algo):
+def start_proc(cam,algo,userID):
+    try:
+      userID = int(userID)
+    except:
+      print "Error: could not parse userID -- ", userID
+      return
+    
+    print "Webcam selected:", cam
+    print "Algo selected:", algo
+    print "User ID:", userID
+      
     global p
-    p = multiprocessing.Process(target=start, args=(e,cam,algo))
+    p = multiprocessing.Process(target=start, args=(e,cam,algo,userID))
     p.start()
 
-
 def stop():
+    # FIXME: it's not how you stop background threads
     cv.DestroyWindow(WINDOW_NAME)
     e.set()
     p.join()

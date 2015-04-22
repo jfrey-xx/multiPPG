@@ -8,22 +8,23 @@ if __name__ == "__main__":
     help="Webcam number")
   parser.add_argument('--algo',
     help="Algo number")
+  parser.add_argument('--user-id',
+    help="User ID")
   args = parser.parse_args()
   
   # no argument triggers GUI, if there is one, thene everything is taken from CLI
   if args.webcam or args.algo:
-    if not (args.webcam and args.algo):
+    if not (args.webcam and args.algo and args.user_id):
       parser.error('Shall you use CLI, you must specify all arguments.')
     else:
       try:
         webcam = int(args.webcam)
         algo= int(args.algo)
+        user_id = int(args.user_id)
       except:
         parser.error('Could not parse arguments as integers.')
       print "Using CLI"
-      print "Webcam selected:", webcam
-      print "Algo selected:", algo
-      video.start_proc(webcam,algo)
+      video.start_proc(webcam,algo,user_id)
   else:
     print "Starting GUI"
     interface.gui()
