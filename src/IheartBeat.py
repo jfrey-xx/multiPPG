@@ -8,6 +8,6 @@ class IheartBeat():
     if self.name:
       print self.name
  
-  def process(self, frame):
+  def process(self, frame, face):
     print "processing..."
   

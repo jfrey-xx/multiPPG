@@ -21,8 +21,7 @@ e = multiprocessing.Event()
 p = None
 cascade = cv2.CascadeClassifier(HAAR_CASCADE_PATH)
 
-# set "1" to track face every frame, 2 every two frames and so on
-TRACKING_RATE=5
+# help face detection to keep track of TRACKING_RATE
 frame_count = 0
 
 # Init later when we'll know about FPS
@@ -44,6 +43,9 @@ def init_euro_filters(nbUers, fps):
   # init filters, X/Y/W/H per persson
   euro_filters = [OneEuroFilter.OneEuroFilter(**euro1_config) for _ in range(4)]
 
+# keeps track of face detection status
+detected_faces = [0]
+
 ##
  # @brief detect_face use the cascade to calculate the square of the faces
  # @param frame The window create by OpenCV
@@ -51,9 +53,9 @@ def init_euro_filters(nbUers, fps):
  # The nomber of square depend of the number of users see by the webcam -- capped by maximum set
  #  
 def detect_faces(frame):
-    global frame_count
+    global frame_count, detected_faces
     faces = ()
-    if not frame_count % TRACKING_RATE:
+    if not frame_count % config.TRACKING_RATE:
         # convert frame to cv2 format, and to B&W to speedup processsing (this cv/cv2 mix drives me crazy)
         # FIXME: prone to bug if webcam already B&W
         # TODO: not multithread safe for TRACKING_RATE
@@ -64,9 +66,13 @@ def detect_faces(frame):
             faces = cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=2, flags=cv.CV_HAAR_SCALE_IMAGE, minSize=(100, 100))
         except cv.error:
             error.unknown_error()
-    frame_count = frame_count + 1
     if len(faces) > 0:
         faces = faces[0:config.NB_FACES]
+        detected_faces = [1]
+    # set detection flag to false only if we actually tried something
+    elif not frame_count % config.TRACKING_RATE:
+        detected_faces = [0]
+    frame_count = frame_count + 1
     return faces
 
 # one static variable to remember last faces in case of tracking disruption, one small patch by default
@@ -75,9 +81,9 @@ last_faces = [[0,0,128,128]]
 def detect_faces_memory(frame):
   """
   same as detect_faces, remember last position of faces in case there's not detected in some frames
+  FIXME: only one face
   """
   global last_faces
-  # TODO: use filter ala One Euro Filter to stabilize tracking
   faces = detect_faces(frame)
   # by default: greet color for faces
   fitFace_color = (0, 255, 0)
@@ -156,8 +162,12 @@ def start(e,cam,algo,userID):
     # init smooth tracking
     init_euro_filters(config.NB_FACES,fps)
     
-    # Init network streamer
-    streamer = streamerLSL.StreamerLSL(config.LSL_NB_CHANNELS,fps)
+    # Init network streamer for PPG values
+    streamerPPG = streamerLSL.StreamerLSL(config.LSL_PPG_NB_CHANNELS*config.NB_FACES,fps,"PPG",userID)
+    # Same for face tracking
+    streamerFace = streamerLSL.StreamerLSL(config.LSL_FACE_NB_CHANNELS*config.NB_FACES,fps,"face",userID)
+    # Whether or not face is detected
+    streamerDetection = streamerLSL.StreamerLSL(config.NB_FACES,fps,"detection",userID)
     
     algoHR = None
     
@@ -179,7 +189,7 @@ def start(e,cam,algo,userID):
     while(True):
         
         # init streamed value with default (make a tuple out of it, as with dummy)
-        values = [0] * config.LSL_NB_CHANNELS,
+        values = [0] * config.LSL_PPG_NB_CHANNELS,
 
         # careful to what is caught, block to big could occult genuine bugs (I'm not saying I mispelled a variable, of course not!)
         try:
@@ -189,14 +199,30 @@ def start(e,cam,algo,userID):
             error.webcam_error()
             break
         
-	values = algoHR.process(frame)
+        faces = detect_faces_filter(frame)
+        values = algoHR.process(frame,faces)
 
-        # clamp values to lsl channels number
-        lsl_values = numpy.zeros(config.LSL_NB_CHANNELS)
-        k = min(config.LSL_NB_CHANNELS, len(values))
+        # PPG -- clamp values to lsl channels number
+        lsl_values = numpy.zeros(config.LSL_PPG_NB_CHANNELS)
+        k = min(config.LSL_PPG_NB_CHANNELS, len(values))
         for i in range(k):
 	  lsl_values[i] = values[i]
-        streamer(lsl_values)
+        streamerPPG(lsl_values)
+        
+        # FACES -- clamp values as well, flatten face detection
+        lsl_faces = numpy.zeros(config.LSL_FACE_NB_CHANNELS)
+        flat_faces = [item for sublist in faces for item in sublist] # lsl doesn't go well with list of list
+        k = min(config.LSL_FACE_NB_CHANNELS, len(flat_faces))
+        for i in range(k):
+	  lsl_faces[i] = flat_faces[i]
+        streamerFace(lsl_faces)
+        
+         # DETECTION -- clamp values as well, flatten face detection
+        lsl_detection = numpy.zeros(config.NB_FACES)
+        k = min(config.NB_FACES, len(detected_faces))
+        for i in range(k):
+	  lsl_detection[i] = detected_faces[i]
+        streamerDetection(lsl_detection)
 
         # compute FPS
         monit()

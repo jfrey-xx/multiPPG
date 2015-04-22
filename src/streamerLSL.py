@@ -8,18 +8,24 @@ from pylsl import StreamInfo, StreamOutlet
 # Use LSL protocol to broadcast data using one stream for EEG and one stream for AUX
 class StreamerLSL():
 	# From IPlugin
-        def __init__(self, nb_channels, sample_rate):
-                self.nb_channels = nb_channels
-                self.sample_rate = sample_rate
-                # TODO: as many stream as we got algo
-		kinect_stream = "kinect_data"
-                kinect_id = "kinect_id1"
-		
-		# Create a new stream
-		info_kinect = StreamInfo(kinect_stream, 'PPG', self.nb_channels,self.sample_rate,'float32',kinect_id);
-		
-		# make outlets
-		self.outlet_kinect = StreamOutlet(info_kinect)
+        def __init__(self, nb_channels, sample_rate, channel_type, ID):
+	  """
+	  nb_channnels: max number of channels
+	  sample_rate: in Hz
+	  channel_type: serve as identifier, eg 'PPG" or 'face'
+	  ID: unique identifier associated to this stream
+	    TODO: check uniqueness
+	  """
+	  stream_name = "kinect_data_" + channel_type + "_" + str(ID)
+	  print "Creating stream:", stream_name, "of type:", channel_type
+	  # TODO: use cam/algo for unique id
+	  stream_id = stream_name
+	  
+	  # Create a new stream
+	  info_kinect = StreamInfo(stream_name, channel_type, nb_channels, sample_rate,'float32', stream_id);
+	  
+	  # make outlets
+	  self.outlet_kinect = StreamOutlet(info_kinect)
 	    
 	# send channels values
         # sample: list of float values (one per face)

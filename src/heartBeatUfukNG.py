@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys; sys.path.append('../process') # help python find // files relative to this script
-import video # boo! import within an import! no choice if I want to change little
+import video
 import cv, cv2
 import numpy
 from IheartBeat import *
@@ -14,6 +14,8 @@ DEBUG = True
 # we don't get any info about webcam yet, so we'll share one debug window per iteration of the algo for each face
 WINDOW_NAME="UFUKNG_debug"
 
+# FIXME: WIP, at the moment return RGB, could compute orthogonal vector here
+
 class heartBeatUfukNG(IheartBeat):
   def __init__(self, fps, *args, **kwargs):
     self.name = "Ufuk NG"
@@ -24,10 +26,9 @@ class heartBeatUfukNG(IheartBeat):
     self.G_chan = SignalBuffer(sample_rate=fps, window_length=3)
     self.B_chan = SignalBuffer(sample_rate=fps, window_length=3)
     
-  def process(self, frame):
+  def process(self, frame, faces):
     #  region of interest
     fitFace_color = (255, 255, 0)
-    faces = video.detect_faces_filter(frame)
     # one ID for each face
     faceN = 0
     
