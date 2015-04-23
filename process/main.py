@@ -1,9 +1,13 @@
 
 import argparse
 import numpy as np
+
 import processDummy, processUfuk, processLUV
 import readerLSL
 import plot
+
+import sys; sys.path.append('../src') # help python find // files relative to this script
+import sample_rate
 
 # algo 0: processDummy
 # algo 1: processLUV
@@ -53,7 +57,14 @@ if __name__ == "__main__":
   # Will trigger plots if any
   plot.PlotLaunch()
   
+  # Init the thread that will monitor FPS
+  monit = sample_rate.PluginSampleRate()
+  monit.activate()
+  
   while True:
     sample, timestamp = reader()
     ret = processor(np.array(sample))
-    print ret
+    # compute FPS
+    monit()
+    if debug:
+      print ret
