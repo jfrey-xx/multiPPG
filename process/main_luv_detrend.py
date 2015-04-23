@@ -15,7 +15,7 @@ if __name__ == "__main__":
   green_detrend = Detrend1D(green, fast=True, attach_plot=False, name="green detrend fast")
   # -- testing FFT
   #fft = FFT(green_chan, window_length = 10, attach_plot=True)
-  filtered_detrend = TemporalFilterFFT(green_detrend, [(0, 0.6),(4,-1)], attach_plot=True, name="detrend filtered fft")
+  #filtered_detrend = TemporalFilterFFT(green_detrend, [(0, 0.6),(4,-1)], attach_plot=True, name="detrend filtered fft")
 
   #filtered = TemporalFilterFFT(green, [(0, 0.6),(4,-1)], attach_plot=True, name="filtered fft")
 
@@ -25,12 +25,12 @@ if __name__ == "__main__":
 
   # -- applying dwt morlet
   # FIXME: check sample rate
-  #morlet = Morlet(filtered, window_length=10, attach_plot=False, name="the green morlet")
-  #morlet_spec = MorletSpectrum(morlet, attach_plot=True)
+  morlet = Morlet(filtered_detrend_butter,  window_length=10, attach_plot=False, name="the green morlet")
+  morlet_spec = MorletSpectrum(morlet, attach_plot=True)
   #max_fft = GetMaxX(fft)
 
   # extract BPM (max freq), pass-band between 0.6 and 4Hz
-  #bpm_one = GetMaxX(morlet_spec, nb_values = 1, stop_list = [(0,0.6),(4,-1)])
+  bpm_one = GetMaxX(morlet_spec, nb_values = 1, stop_list = [(0,0.6),(4,-1)])
   #bpms_raw = SignalBuffer(window_length=5, input_data=bpm_one, attach_plot=True, name="BPM history")
   
   ## testing normalization
@@ -59,5 +59,5 @@ if __name__ == "__main__":
     #print "max morlet:", max_morlet.values[0], ", max fft:", max_fft.values[0]
     #print "Norm -- max morlet:", max_morlet_norm.values[0], ", max fft:", max_fft_norm.values[0]
 
-    #print "bpm:", bpm_one.values[0]
+    print "bpm:", bpm_one.values[0]
     #print "bpm smoothed:", bpms_smooth.values[0]

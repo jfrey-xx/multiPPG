@@ -16,7 +16,7 @@ class StreamerLSL():
 	  ID: unique identifier associated to this stream
 	    TODO: check uniqueness
 	  """
-	  stream_name = "kinect_data_" + channel_type + "_" + str(ID)
+	  stream_name = channel_type + "_" + str(ID)
 	  print "Creating stream:", stream_name, "of type:", channel_type
 	  # TODO: use cam/algo for unique id
 	  stream_id = stream_name
