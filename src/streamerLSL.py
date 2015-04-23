@@ -5,6 +5,8 @@ import sys; sys.path.append('../lib') # help python find pylsl relative to this 
 
 from pylsl import StreamInfo, StreamOutlet
 
+# WARNING: streamerLSL.StreamerLSL() should be created before  plot.PlotLaunch() is called otherwise won't appear (??)
+
 # Use LSL protocol to broadcast data using one stream for EEG and one stream for AUX
 class StreamerLSL():
 	# From IPlugin
