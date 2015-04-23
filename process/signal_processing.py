@@ -2,12 +2,26 @@ import sys; sys.path.append('../lib') # help python find libs relative to this s
 import data
 import scipy
 import scipy.fftpack
+from scipy.signal import butter, lfilter
 import numpy as np
 import pyscellania_wavelets as pw
 from utilities import *
 
 # Takes a DataBuffer as input, makes computations and serve new values through inheritance.
 # TODO: optimize memory by sharing input buffer when possible (pointer instead of copy)
+
+# from http://stackoverflow.com/a/12233959
+def butter_bandpass(lowcut, highcut, fs, order=5):
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = butter(order, [low, high], btype='band')
+    return b, a
+
+
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+    return lfilter(b, a, data)
 
 class Invert(data.DataBuffer):
   """
@@ -92,12 +106,12 @@ class GetMaxX(data.DataBuffer):
     # replace values with corresponding subset
     self.push_values(sorted_labels[0:self.queue_size])
 
-class TemporalFilter(data.SignalBuffer):
+class TemporalFilterFFT(data.SignalBuffer):
   """
   Use iFFT to remove unwanted frequencies
   FIXME: 1D only
   """
-  def __init__(self, input_signal_buffer, stop_list, window_length = -1, attach_plot = False, name = "TemporalFilter"):
+  def __init__(self, input_signal_buffer, stop_list, window_length = -1, attach_plot = False, name = "TemporalFilterFFT"):
     """
     input_signal_buffer: SignalBuffer type
     stop_list: list of tuples, frequencies to remove. Eg [(0,4), (20,30), (60,-1)] to low-pass at 60, high-pass at 4 and notch between 20 and 30.
@@ -114,7 +128,7 @@ class TemporalFilter(data.SignalBuffer):
     self.input_buffer = data.DataBuffer(input_signal_buffer.sample_rate, (input_signal_buffer.sample_rate*window_length,), input_data=input_signal_buffer)
     self.input_buffer.set_labels(scipy.fftpack.fftfreq(self.input_buffer.queue_size, 1./input_signal_buffer.sample_rate))
     
-    data.SignalBuffer.__init__(self, self.input_buffer.sample_rate, input_signal_buffer.window_length, attach_plot = attach_plot, name = name)
+    data.SignalBuffer.__init__(self, self.input_buffer.sample_rate, window_length, attach_plot = attach_plot, name = name)
     self.input_buffer.add_callback(self)
 
   def __call__(self, all_values, new_values):
@@ -130,8 +144,42 @@ class TemporalFilter(data.SignalBuffer):
         end = np.max(x)
       # zero selected band
       fft[(abs(x) >= start) & (abs(x) <= end)] = 0
-    # compute iFFT and push    
+    # compute iFFT and push
     self.push_values(scipy.ifft(fft).real)
+
+class BandPassFilterButterworth(data.SignalBuffer):
+  """
+  Use Butterworth filter to remove unwanted frequencies
+  FIXME: 1D only
+  TODO: tuple as with TemporalFilterFFT
+  """
+  def __init__(self, input_signal_buffer, lowcut, highcut, window_length = -1, order=5, attach_plot = False, name = "BandPassFilterButterworth"):
+    """
+    input_signal_buffer: SignalBuffer type
+    lowcut/highcut: remove frequencies outside of this interval
+    window_length: set parameter to extend window length of the signal in the buffer
+    order: order of the filter
+    """
+    if input_signal_buffer.ndim > 1:
+      raise NameError("NDimNotHandled")
+
+    self.lowcut = lowcut
+    self.highcut = highcut
+    self.order = order
+
+    # By default input buffer will be same length as the signal
+    if window_length <= 0:
+      window_length = input_signal_buffer.window_length
+      
+    # use a DataBuffer type because we store FFT, need fixed X axis (and don't use signal_processing.FFT because we need all points)
+    self.input_buffer = data.DataBuffer(input_signal_buffer.sample_rate, (input_signal_buffer.sample_rate*window_length,), input_data=input_signal_buffer)
+    
+    data.SignalBuffer.__init__(self, self.input_buffer.sample_rate, window_length, attach_plot = attach_plot, name = name)
+    self.input_buffer.add_callback(self)
+
+  def __call__(self, all_values, new_values):
+    # filter and push
+    self.push_values(butter_bandpass_filter(all_values, self.lowcut, self.highcut, self.sample_rate, order=self.order))
 
 class Morlet(data.DataBuffer):
   """
@@ -237,7 +285,7 @@ class RemoveSlidingAverage(data.DataBuffer):
 
 class Derivative(data.DataBuffer):
   """
-  Use numpy.diff to compute firt order derivative
+  Use numpy.diff to compute first order derivative
   """
   def __init__(self, input_data_buffer, window_length = -1, attach_plot = False, name = "Derivative"):
     # By default input buffer will be 1s long
@@ -284,11 +332,11 @@ class CondidenceIndex(data.DataBuffer):
 
 class BPMSmoother(data.DataBuffer):
   """
-  Simple algo to discard unrealistic values, check adjacent values
+  Simple algo to discard unrealistic values, check adjacent values (taken from @Bousefsaf2014)
   FIXME: may need perfect sync because of points number
   """
   def __init__(self, input_data_buffer, window_length = 1, attach_plot = False, name = "smoother"):
-    # the alorithm work on 5 time points
+    # the algorithm work on 5 time points
     shape_input = 5,
     self.input_buffer = data.DataBuffer(input_data_buffer.sample_rate, shape_input, input_data=input_data_buffer)
     
@@ -310,6 +358,27 @@ class BPMSmoother(data.DataBuffer):
     all_values[2]=m
     value = m
     self.push_value(value)
+
+class SlidingAverage(data.DataBuffer):
+  """
+  Compute a sliding average. NB: will flatten over time, ie last dimension of input array -- input shape is kept
+  """
+  def __init__(self, input_data_buffer, sliding_window = 1, window_length = 1, attach_plot = False, name = "sliding average"):
+    """
+    sliding_window: size of the window onto which make average (s))
+    """
+    # compute sliding window size (change dimensions in shape)
+    shape_input = input_data_buffer.shape[:-1] + (input_data_buffer.sample_rate * sliding_window,)
+    self.input_buffer = data.DataBuffer(input_data_buffer.sample_rate, shape_input, input_data=input_data_buffer)
+    
+    # flat over temporal dimension but retain history
+    shape =  input_data_buffer.shape[:-1] + (input_data_buffer.sample_rate * window_length,)
+    data.DataBuffer.__init__(self, self.input_buffer.sample_rate, shape, attach_plot = attach_plot, name = name)
+    self.input_buffer.add_callback(self)
+
+  def __call__(self, all_values, new_values):
+    values = np.mean(all_values, axis=all_values.ndim-1, keepdims=True)
+    self.push_values(values)
 
 class Detrend1D(data.SignalBuffer):
   """
@@ -353,7 +422,7 @@ class Detrend1D(data.SignalBuffer):
 class Detrend2D(data.Data2DBuffer):
   """
   Apply detrending algo to data in row
-  NB: threaded
+  NB: threaded if fast == False
   """
   def __init__(self, input_data_buffer, fast=False, window_length = -1, attach_plot = False, name = "Detrend"):
   

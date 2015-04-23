@@ -14,7 +14,7 @@ if __name__ == "__main__":
   
   # -- testing FFT
   #fft = FFT(green_chan, window_length = 10, attach_plot=True)
-  #filtered = TemporalFilter(green_chan, [(0, 0.6),(4,-1)], attach_plot=True)
+  #filtered = TemporalFilterFFT(green_chan, [(0, 0.6),(4,-1)], attach_plot=True)
   #max_fft = GetMaxX(fft)
 
   # -- applying dwt morlet
