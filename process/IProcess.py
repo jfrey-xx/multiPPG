@@ -41,4 +41,5 @@ class IProcess():
     if len(values) < self.nb_values:
       raise NameError('ProcessNotEnoughValues')
     self.input_chan.push_values(values[0:self.nb_values])
-    return    self.bpms.values[-1],self.conf_idx.values[-1]
+    # convert from Hz to BPM
+    return    self.bpms.values[-1]*60,self.conf_idx.values[-1]
