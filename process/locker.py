@@ -4,6 +4,7 @@
  
 from threading import Thread, Lock
 import numpy as np
+import time
 
 class ICallbackFunction():
     """
@@ -40,7 +41,8 @@ class CallbackNow(ICallbackFunction):
 
 class CallbackLazy(ICallbackFunction,Thread):
     """
-    Threaded, could miss values, will do computations when it could
+    Threaded, could miss values, will do computations when it can
+    NB: cannot go faster than 100Hz because of some polling
     FIXME: for sure we could do things to optimize and ensure sync
     """
     def __init__(self, fun):
@@ -98,4 +100,8 @@ class CallbackLazy(ICallbackFunction,Thread):
                         self.new_data = False
                         self.fun(all_values, new_values)
                         self.working = False
+                    # slow down active wait, CPU priority for non-threaded computations
+                    else:
+                      time.sleep(0.001)
+
 

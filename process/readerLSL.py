@@ -7,28 +7,58 @@ from pylsl import StreamInlet, resolve_stream
 
 # Use LSL protocol read PPG data stream
 class ReaderLSL():
-  def __init__(self, stream_type='PPG'):
+  """
+  Will raise error if do not find stream type or ID
+  """
+  def __init__(self, stream_type='PPG', stream_id=None):
+    """
+    stream_type: LSL type of the stream to check
+    stream_id: will select specifically one stream based on its name "[stream_type]_[stream_id]"
+    """
     # first resolve said stream type on the network
     streams = resolve_stream('type',stream_type)
-    self.nb_streams = len(streams)
-    print "Detecting", self.nb_streams, stream_type, "streams"
+    self.nb_streams = 0
+    
+    if len(streams) < 1:
+      raise NameError('LSLTypeNotFound')
+      
+    print "Detecting", len(streams), stream_type, "streams"
     
     # create inlets to read from each stream
     self.inlets = []
-    for stream in streams:
-      self.inlets.append(StreamInlet(stream))
-    
     # retrieve also corresponding StreamInfo for future uses (eg sampling rate)
     self.infos = []
-    for inlet in self.inlets:
-      self.infos.append(inlet.info())
+    
+    for stream in streams:
+      inlet = StreamInlet(stream)
+      info = inlet.info()
+      # if an ID is specified, will look only for it, otherwise add everything
+      if stream_id is not None:
+	if info.name() == stream_type + "_" + str(stream_id):
+	  # check that there is a unique stream with this name to stop right there any ambiguity
+	  if self.nb_streams > 0:
+	    raise NameError('LSLDuplicateStreamName')
+	  else:
+	    self.inlets.append(inlet)
+	    self.infos.append(info)
+	    self.nb_streams = self.nb_streams + 1
+      else:
+	self.inlets.append(inlet)
+	self.infos.append(info)
+	self.nb_streams = self.nb_streams + 1
+    
+    if stream_id and self.nb_streams < 1:
+      raise NameError('LSLStreamNameNotFound')
     
     # init list of samples
     self.samples = [] * self.nb_streams
 
   # retrieve samples from network
   def __call__(self):
-    # get a new samples
+    """
+    get new samples
+    FIXME return only sample of last inlets
+    """
     i=0
     for inlet in self.inlets:
       sample,timestamp = inlet.pull_sample()

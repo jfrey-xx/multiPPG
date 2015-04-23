@@ -4,10 +4,16 @@ MAGIC_FPS = 30
 WEBCAM_WIDTH = 640
 WEBCAM_HEIGHT = 480
 
-# max number of values sent to streamer
-# FIXME: varying depending on algo
-LSL_NB_CHANNELS = 3
+# set "1" to track face every frame, 2 every two frames and so on
+TRACKING_RATE=5
 
-# Number of ursers
+# max number of values sent to streamer for PPG vallues
+# FIXME: varying depending on algo
+LSL_PPG_NB_CHANNELS = 3
+
+# max number of values sent to streamer per face for tracking (x,y,w,h)
+LSL_FACE_NB_CHANNELS = 4
+
+# Number of users max per cam
 # FIXME: bold move to say only one at the moment
 NB_FACES=1

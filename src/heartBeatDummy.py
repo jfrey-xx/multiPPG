@@ -1,5 +1,4 @@
 
-import video # boo! import within an import! no choice if I want to change little
 import cv, cv2
 import numpy
 from IheartBeat import *
@@ -9,10 +8,9 @@ class heartBeatDummy(IheartBeat):
     self.name = "Dummy"
     IheartBeat.__init__(self, args, kwargs)
     
-  def process(self, frame):
+  def process(self, frame, faces):
     #  region of interest
     fitFace_color = (0, 255, 255)
-    faces = video.detect_faces_filter(frame)
     # we be filled with mean color of each face
     means = []
     # one ID for each face

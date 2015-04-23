@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import video # boo! import within an import! no choice if I want to change little
+import video
 import cv, cv2
 import numpy
 from IheartBeat import *
@@ -23,10 +23,9 @@ class heartBeatLUV(IheartBeat):
     self.name = "Luv"
     IheartBeat.__init__(self, kwargs)
         
-  def process(self,frame):
+  def process(self,frame, faces):
     #  region of interest
     fitFace_color = (255, 255, 0)
-    faces = video.detect_faces_filter(frame)
     # we be filled with mean color of each face
     means = []
     # one ID for each face

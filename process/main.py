@@ -1,57 +1,78 @@
+
+import argparse
+import numpy as np
+
+import processDummy, processUfuk, processLUV
 import readerLSL
-import plot, data
-from signal_processing import *
-from data import *
+import plot
+
+import sys; sys.path.append('../src') # help python find // files relative to this script
+import sample_rate
+import streamerLSL
+
+# algo 0: processDummy
+# algo 1: processLUV
+# algo 2: processUfuk
 
 if __name__ == "__main__":
-  reader = readerLSL.ReaderLSL("PPG")
-  assert(reader.nb_streams > 0)
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--stream', default='PPG',
+    help="Stream type (default: PPG)")
+  parser.add_argument('--algo', default=0,
+    help="Algo number (default: 0)")
+  parser.add_argument('--user-id', default=0,
+    help="User ID (default: 0)")
+  parser.add_argument('-d', '--debug', dest='debug', action='store_true',
+    help="Enable debug mode")
+  parser.set_defaults(debug=False)
+  args = parser.parse_args()
+  
+  try:
+    algo = int(args.algo)
+    user_id = int(args.user_id)
+  except:
+    parser.error('Could not parse arguments as integers.')
+  stream = args.stream
+  debug = args.debug
+
+  print "Stream type:", stream
+  print "Algo:", algo
+  print "User ID:", user_id
+  print "Debug:", debug
+  
+  # init LSL reader
+  reader = readerLSL.ReaderLSL(stream, user_id)
   for i in range(reader.nb_streams):
     print reader.getSamplingRate(i), "Hz for channel", i
   
-  # New holder for green channel
-  green_chan = SignalBuffer(reader.getSamplingRate(0), window_length = 10, attach_plot=True, name="green")
-  
-  # -- testing FFT
-  #fft = FFT(green_chan, window_length = 10, attach_plot=True)
-  #filtered = TemporalFilterFFT(green_chan, [(0, 0.6),(4,-1)], attach_plot=True)
-  #max_fft = GetMaxX(fft)
+  # check/create algo pipeline
+  if algo == 0:
+    processor = processDummy.ProcessDummy(reader.getSamplingRate(0), attach_plot=debug)
+  elif algo == 1:
+    processor = processLUV.ProcessLUV(reader.getSamplingRate(0), attach_plot=debug)
+  elif algo == 2:
+    processor = processUfuk.ProcessUfuk(reader.getSamplingRate(0), attach_plot=debug)
+  else:
+    raise NameError('AlgoNotFound')
+      
+  # init LSL output, fist chan for BPMs, second for confidence index
+  print "Starting BPM LSL stream"
+  fps = reader.getSamplingRate(0) # only one channel/user at a time in fact
+  streamer = streamerLSL.StreamerLSL(2,fps,"BPM",user_id)
 
-  # -- applying dwt morlet
-  # FIXME: check sample rate
-  morlet = Morlet(green_chan, window_length=10, attach_plot=False, name="the green morlet")
-  morlet_spec = MorletSpectrum(morlet, attach_plot=True)
-  #max_fft = GetMaxX(fft)
-
-  # extract BPM (max freq), pass-band between 0.6 and 4Hz
-  bpm_one = GetMaxX(morlet_spec, nb_values = 1, stop_list = [(0,0.6),(4,-1)])
-  bpms_raw = SignalBuffer(window_length=5, input_data=bpm_one, attach_plot=True, name="BPM history")
-  
-  ## testing normalization
-  #slide_avg = RemoveSlidingAverage(green_chan, attach_plot=False)
-  #norm = Invert(slide_avg, attach_plot=True)
-  #fft_norm = FFT(norm, window_length = 10, attach_plot=True, name="fft norm")
-  #morlet_norm = Morlet(norm, window_length=10, attach_plot=True, name="the green morlet norm")
-  #morlet_spec_norm = MorletSpectrum(morlet_norm, attach_plot=True, name="morlet spec norm")
-  #max_morlet_norm = GetMaxX(morlet_spec_norm)
-  #max_fft_norm = GetMaxX(fft_norm)
-
-  # confidence index: derivative on 0.5s window of raw signal
-  #deriv = Derivative(green_chan, window_length=0.5, attach_plot=True)
-  conf_idx = CondidenceIndex(green_chan, window_length=10, attach_plot=True)
-  # smooth BPM: discard impossible values
-  bpms_smooth = BPMSmoother(bpms_raw, window_length = 5, attach_plot=True, name="ultimate smoother")
-  
   # Will trigger plots if any
   plot.PlotLaunch()
   
+  name = "Process " + stream + "_" + str(user_id)
+  # Init the thread that will monitor FPS
+  monit = sample_rate.PluginSampleRate(name=name)
+  monit.activate()
+  
   while True:
     sample, timestamp = reader()
-    #print timestamp, sample
-    # retrieve value for green channel
-    green_chan.push_value(sample[0])
-    #print "max morlet:", max_morlet.values[0], ", max fft:", max_fft.values[0]
-    #print "Norm -- max morlet:", max_morlet_norm.values[0], ", max fft:", max_fft_norm.values[0]
-
-    print "bpm:", bpm_one.values[0]
-    print "bpm smoothed:", bpms_smooth.values[0]
+    ret = processor(np.array(sample))
+    streamer(ret)
+    # compute FPS
+    monit()
+    if debug:
+      print ret
