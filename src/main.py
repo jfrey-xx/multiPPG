@@ -12,8 +12,8 @@ if __name__ == "__main__":
     help="User ID")
   args = parser.parse_args()
   
-  # no argument triggers GUI, if there is one, thene everything is taken from CLI
-  if args.webcam or args.algo:
+  # no argument triggers GUI, if there is one, then everything is taken from CLI
+  if args.webcam or args.algo or args.user_id:
     if not (args.webcam and args.algo and args.user_id):
       parser.error('Shall you use CLI, you must specify all arguments.')
     else:
