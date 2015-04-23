@@ -16,6 +16,8 @@ import OneEuroFilter
 import webcam
 import config
 
+# NB: this module is process safe, but not thread safe (eg face detection)
+
 HAAR_CASCADE_PATH = "../external/haarcascades/haarcascade_frontalface_alt.xml"
 e = multiprocessing.Event()
 p = None
@@ -58,7 +60,6 @@ def detect_faces(frame):
     if not frame_count % config.TRACKING_RATE:
         # convert frame to cv2 format, and to B&W to speedup processsing (this cv/cv2 mix drives me crazy)
         # FIXME: prone to bug if webcam already B&W
-        # TODO: not multithread safe for TRACKING_RATE
         gray = cv2.cvtColor(numpy.array(cv.GetMat(frame)), cv2.COLOR_BGR2GRAY)
 
         try:
@@ -182,8 +183,9 @@ def start(e,cam,algo,userID):
 	print "Error: unknown algorithm"
 	return
 
+    monit_name = "cam" +  str(cam) + "_algo" + str(algo) + "_user" + str(userID)
     # Init the thread that will monitor FPS
-    monit = sample_rate.PluginSampleRate()
+    monit = sample_rate.PluginSampleRate(name=monit_name)
     monit.activate()
 
     while(True):

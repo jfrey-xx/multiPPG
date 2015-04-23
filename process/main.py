@@ -57,8 +57,9 @@ if __name__ == "__main__":
   # Will trigger plots if any
   plot.PlotLaunch()
   
+  name = "Process " + stream + "_" + str(user_id)
   # Init the thread that will monitor FPS
-  monit = sample_rate.PluginSampleRate()
+  monit = sample_rate.PluginSampleRate(name=name)
   monit.activate()
   
   while True:
