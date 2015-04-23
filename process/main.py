@@ -11,27 +11,29 @@ import plot
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('--stream',
-    help="Stream type, eg 'PPG'")
-  parser.add_argument('--algo',
-    help="Algo number")
-  parser.add_argument('--user-id',
-    help="User ID")
+  parser.add_argument('--stream', default='PPG',
+    help="Stream type (default: PPG)")
+  parser.add_argument('--algo', default=0,
+    help="Algo number (default: 0)")
+  parser.add_argument('--user-id', default=0,
+    help="User ID (default: 0)")
+  parser.add_argument('-d', '--debug', dest='debug', action='store_true',
+    help="Enable debug mode")
+  parser.set_defaults(debug=False)
   args = parser.parse_args()
   
-  if not (args.stream and args.algo and args.user_id):
-    parser.error('You must specify all arguments.')
-  else:
-    try:
-      algo = int(args.algo)
-      user_id = int(args.user_id)
-    except:
-      parser.error('Could not parse arguments as integers.')
-    stream = args.stream
+  try:
+    algo = int(args.algo)
+    user_id = int(args.user_id)
+  except:
+    parser.error('Could not parse arguments as integers.')
+  stream = args.stream
+  debug = args.debug
 
   print "Stream type:", stream
   print "Algo:", algo
   print "User ID:", user_id
+  print "Debug:", debug
   
   # init LSL reader
   reader = readerLSL.ReaderLSL(stream, user_id)
@@ -40,11 +42,11 @@ if __name__ == "__main__":
 
   # check/create algo pipeline
   if algo == 0:
-    processor = processDummy.ProcessDummy(reader.getSamplingRate(0))
+    processor = processDummy.ProcessDummy(reader.getSamplingRate(0), attach_plot=debug)
   elif algo == 1:
-    processor = processUfuk.ProcessUfuk(reader.getSamplingRate(0))
+    processor = processLUV.ProcessLUV(reader.getSamplingRate(0), attach_plot=debug)
   elif algo == 2:
-    processor = processLUV.ProcessLUV(reader.getSamplingRate(0))
+    processor = processUfuk.ProcessUfuk(reader.getSamplingRate(0), attach_plot=debug)
   else:
     raise NameError('AlgoNotFound')
       

@@ -5,16 +5,24 @@ class IProcess():
   """
   Interface for processing algo
   """
-  def __init__(self, input_chan, bpm_chan, confidence_idx_chan, attach_plot=False):
+  def __init__(self, input_chan, bpm_chan, confidence_idx_chan, nb_values, attach_plot=False):
     """
     Should be called by sub-class after its pipeline has been initiated
     
     input_chan: new values will be pushed to it
     bpm_chan: output channel of the algorithm, smoothing will be computed
     confidence_idx_chan: one particular chan upon which the confidence channel will be computed. NB: we "backport" such feature from Bousefsaf to other algo
+    
+    nb_values: number of values needed for the algorithm to perform, will raise error if not enough values are givent to  __call__ is different
     """
-    print "start process"
-
+    
+    if self.name:
+      print "start process", self.name
+    else:
+      print "start process"
+    
+    self.nb_values = nb_values
+    
     self.input_chan = input_chan
     # confidence index: derivative on 0.5s window of raw signal
     #deriv = Derivative(green_chan, window_length=0.5, attach_plot=True)
@@ -27,7 +35,10 @@ class IProcess():
   def __call__(self, values):
     """
     Update pipeline with new values, return a tuble with BPM, confidence_idx
+    
+    TODO: will grab the first nb_values, could not select particular indexes
     """
-    self.input_chan.push_values(values)
+    if len(values) < self.nb_values:
+      raise NameError('ProcessNotEnoughValues')
+    self.input_chan.push_values(values[0:self.nb_values])
     return    self.bpms.values[-1],self.conf_idx.values[-1]
-    #green_chan.push_value(sample[1])

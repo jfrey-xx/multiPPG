@@ -22,7 +22,7 @@ class ReaderLSL():
     if len(streams) < 1:
       raise NameError('LSLTypeNotFound')
       
-    print "Detecting", self.nb_streams, stream_type, "streams"
+    print "Detecting", len(streams), stream_type, "streams"
     
     # create inlets to read from each stream
     self.inlets = []
@@ -32,7 +32,6 @@ class ReaderLSL():
     for stream in streams:
       inlet = StreamInlet(stream)
       info = inlet.info()
-      print info.name()
       # if an ID is specified, will look only for it, otherwise add everything
       if stream_id is not None:
 	if info.name() == stream_type + "_" + str(stream_id):
