@@ -63,11 +63,11 @@ while True:
   # Once GUI is set, push values to all streams
   if gui.init:
     for i in range(nbPlayers):
-      print "player", i
+      #print "player", i
       bpm = gui.BMPs[i].get()
       idx = gui.idx[i].get()
       detection = gui.detections[i].get()
-      print "BPM:", bpm, ", idx:", idx, ", detection:", detection
+      #print "BPM:", bpm, ", idx:", idx, ", detection:", detection
       streamerDetections[i]([detection])
       streamerBPMs[i]([idx,bpm])
   time.sleep((1./FPS))
