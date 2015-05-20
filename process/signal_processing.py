@@ -151,6 +151,7 @@ class BandPassFilterButterworth(data.SignalBuffer):
   """
   Use Butterworth filter to remove unwanted frequencies
   FIXME: 1D only
+  FIXME: threaded as emergency fix, but suspiciously slow, even with few values... or not slower with 4x more (?)
   TODO: tuple as with TemporalFilterFFT
   """
   def __init__(self, input_signal_buffer, lowcut, highcut, window_length = -1, order=5, attach_plot = False, name = "BandPassFilterButterworth"):
@@ -175,7 +176,7 @@ class BandPassFilterButterworth(data.SignalBuffer):
     self.input_buffer = data.DataBuffer(input_signal_buffer.sample_rate, (input_signal_buffer.sample_rate*window_length,), input_data=input_signal_buffer)
     
     data.SignalBuffer.__init__(self, self.input_buffer.sample_rate, window_length, attach_plot = attach_plot, name = name)
-    self.input_buffer.add_callback(self)
+    self.input_buffer.add_callback(self, threaded=True)
 
   def __call__(self, all_values, new_values):
     # filter and push
