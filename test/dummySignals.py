@@ -69,5 +69,5 @@ while True:
       detection = gui.detections[i].get()
       #print "BPM:", bpm, ", idx:", idx, ", detection:", detection
       streamerDetections[i]([detection])
-      streamerBPMs[i]([idx,bpm])
+      streamerBPMs[i]([bpm, idx])
   time.sleep((1./FPS))
