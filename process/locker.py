@@ -96,7 +96,7 @@ class CallbackLazy(ICallbackFunction,Thread):
                     all_values = self.all_values
                     new_values = self.new_values
                     # give some time to the data to come
-                    if all_values is not None and new_values is not None:
+                    if self.new_data and all_values is not None and new_values is not None:
                         self.new_data = False
                         self.fun(all_values, new_values)
                         self.working = False
