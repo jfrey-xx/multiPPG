@@ -37,9 +37,22 @@ class IProcess():
     Update pipeline with new values, return a tuble with BPM, confidence_idx
     
     TODO: will grab the first nb_values, could not select particular indexes
+    FIXME: hotfix in case something went wrong with pushed values
     """
-    if len(values) < self.nb_values:
-      raise NameError('ProcessNotEnoughValues')
-    self.input_chan.push_values(values[0:self.nb_values])
+    
+    # some more steps against failure
+    nb_incoming_values = -1
+    try:
+      nb_incoming_values = len(values)
+    except:
+      print "WARNING: recovering failure, could not assess length of values: ", values
+    
+    # if < 0 we just recovered from failure, won't raise exception but will not push further values
+    if nb_incoming_values >= 0:
+      if nb_incoming_values < self.nb_values:
+        raise NameError('ProcessNotEnoughValues')
+      else:
+        self.input_chan.push_values(values[0:self.nb_values])
+        
     # convert from Hz to BPM
     return    self.bpms.values[-1]*60,self.conf_idx.values[-1]
