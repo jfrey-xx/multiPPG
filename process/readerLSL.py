@@ -5,12 +5,12 @@ import sys; sys.path.append('../lib') # help python find pylsl relative to this 
 
 from pylsl import StreamInlet, resolve_stream
 
-# Use LSL protocol read PPG data stream
+# Use LSL protocol read PPG data stream -- buffer set to 5s max to avoid huge shift because in case of delay
 class ReaderLSL():
   """
   Will raise error if do not find stream type or ID
   """
-  def __init__(self, stream_type='PPG', stream_id=None):
+  def __init__(self, stream_type='PPG', stream_id=None, buflen=5):
     """
     stream_type: LSL type of the stream to check
     stream_id: will select specifically one stream based on its name "[stream_type]_[stream_id]"
@@ -30,7 +30,7 @@ class ReaderLSL():
     self.infos = []
     
     for stream in streams:
-      inlet = StreamInlet(stream)
+      inlet = StreamInlet(stream, max_buflen=buflen)
       info = inlet.info()
       # if an ID is specified, will look only for it, otherwise add everything
       if stream_id is not None:
