@@ -8,6 +8,7 @@ import plot
 
 import sys; sys.path.append('../src') # help python find // files relative to this script
 import sample_rate
+import immersion
 import streamerLSL
 
 # algo 0: processDummy
@@ -67,7 +68,12 @@ if __name__ == "__main__":
   # Init the thread that will monitor FPS
   monit = sample_rate.PluginSampleRate(name=name)
   monit.activate()
-  
+
+  print "init env"
+  environment = immersion.Immersion(processor.morlet.values)
+  environment.activate()
+  print "finish init env" 
+
   while True:
     sample, timestamp = reader()
     processor(np.array(sample))
