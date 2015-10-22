@@ -396,7 +396,7 @@ class MyTapper(DirectObject):
         
         
     def step(self):
-        #print('STEP')
+        print('STEP')
         taskMgr.step()
         
     
@@ -422,7 +422,9 @@ class MyTapper(DirectObject):
         
     def formatSurfArray(self):
         """Outputs an array that can be drawn as a surface"""
-        
+
+        print "convert array"
+        print self.arrayIn[0]
         # Format the array
         arrayOut = np.array(self.arrayIn).reshape(self.origSurfSize)
         

@@ -44,5 +44,5 @@ class ProcessMuse(IProcess):
         raise NameError('ProcessNotEnoughValues')
       else:
         self.input_chan.push_values(values[0:self.nb_values])
-        
+    
     # Todo: 3D show

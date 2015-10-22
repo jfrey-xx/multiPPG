@@ -1,4 +1,6 @@
 
+import multiprocessing as mpc
+import ctypes
 import argparse
 import numpy as np
 
@@ -15,6 +17,12 @@ import streamerLSL
 # algo 1: processLUV
 # algo 2: processUfuk
 # algo 3: processMuse
+
+def getRealData(spectrArray, xDim, yDim):
+  print "Here:", a
+  while True:
+    print "fun:", spectrArray[1:10]
+    pass # print "getReal:", spectrArray
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
@@ -69,18 +77,47 @@ if __name__ == "__main__":
   monit = sample_rate.PluginSampleRate(name=name)
   monit.activate()
 
-  print "init env"
   values = processor.morlet.values
   values_shape = np.shape(values)
   xDim = values_shape[0]
   yDim = values_shape[1]
-  panda3dObj=visualization.MyTapper(values, xDim, yDim)
-  
+
+  # from http://stackoverflow.com/a/5550156
+  #spectrArray_base = mpc.Array(ctypes.c_double, range(xDim*yDim))
+  #spectrArray = np.ctypeslib.as_array(spectrArray_base.get_obj())
+  #spectrArray = spectrArray.reshape(xDim, yDim)
+
+  spectrArray = mpc.Array('f', range(xDim*yDim))
+
+  print "launch main loop" 
+  a = 0
+  #p = mpc.Process(target=getRealData, args=(spectrArray, xDim, yDim))
+  #p.start()
+  print "end main loop" 
+
+  print "init env"
+  panda3dObj=visualization.MyTapper(spectrArray, xDim, yDim)
   print "finish init env" 
 
+  p2 = mpc.Process(target= panda3dObj.step(), args=())
+  p2.start()
+
+  print "before while"
+  
   while True:
     sample, timestamp = reader()
     processor(np.array(sample))
     # compute FPS
     monit()
-    panda3dObj.step()
+    # work on local copy
+    vcopy = np.array(processor.morlet.values)
+    vcopy = np.reshape(vcopy, xDim*yDim)    
+    #print "main:", vcopy[1:10]
+    #print np.shape(vcopy)
+    #spectrArray[:] = vcopy[:]
+    #spectrArray = processor.morlet.values
+
+  p.join()
+  p2.join()
+      
+  print('Game Over.')
