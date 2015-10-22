@@ -279,8 +279,8 @@ def makeSurface(rand_array, surface=None, scale=15):
                 
                 
             
-            #print(vertex1, vertex2, vertex3)
-            #print(vertex4, vertex5, vertex6)
+            print(vertex1, vertex2, vertex3)
+            print(vertex4, vertex5, vertex6)
             
     else:
         # Update the data of the surface Geom
@@ -290,7 +290,7 @@ def makeSurface(rand_array, surface=None, scale=15):
     
 
 class MyTapper(DirectObject):
-    def __init__(self, arrayIn, xDim, yDim):
+    def __init__(self, arrayIn):
         
         self.base = base
         self.base.setBackgroundColor(0.05,0.05,0.05)        
@@ -338,17 +338,9 @@ class MyTapper(DirectObject):
         
         
         # Create the surface
-        self.origSurfSize = (xDim, yDim)
-        if xDim > 20:
-            xDim = 20
-        if yDim > 100:
-            yDim = 100
-        self.newSurfSize = (xDim, yDim)
-        self.old_arrayOut = np.zeros((self.newSurfSize[0], self.newSurfSize[1], 2))
         self.scale = 30
-        time.sleep(0.1)
-        rand_array = self.formatSurfArray()
-        self.surf = makeSurface(rand_array, None)
+        #time.sleep(0.1)
+        self.surf = makeSurface(self.arrayIn, None)
         print('Surface successfully created.')
         snode = GeomNode('surface')
         snode.addGeom(self.surf)
@@ -396,7 +388,7 @@ class MyTapper(DirectObject):
         
         
     def step(self):
-        print('STEP')
+        #print('STEP')
         taskMgr.step()
         
     
@@ -407,8 +399,7 @@ class MyTapper(DirectObject):
     def updateSurface(self, task): # Also, update the bar
         diff = task.time - self.oldTaskTime
         if diff > self.updatePeriod:
-            rand_array = self.formatSurfArray()
-            makeSurface(rand_array, self.surf, scale=self.scale)
+            makeSurface(self.arrayIn, self.surf, scale=self.scale)
             
             hrInValue = 60
             lightScale = (hrInValue - 50.)/(110.-50.)
@@ -420,23 +411,6 @@ class MyTapper(DirectObject):
             
         return Task.cont            
         
-    def formatSurfArray(self):
-        """Outputs an array that can be drawn as a surface"""
-
-        print "convert array"
-        print self.arrayIn[0]
-        # Format the array
-        arrayOut = np.array(self.arrayIn).reshape(self.origSurfSize)
-        
-        arrayOut = arrayOut[0:self.newSurfSize[0], 0:self.newSurfSize[1]]
-        
-        c = np.dstack((self.old_arrayOut, arrayOut))
-        mean_arrayOut = np.mean(c, axis=2)
-        
-        self.old_arrayOut = arrayOut
-        #print(self.old_arrayOut.shape)
-    
-        return mean_arrayOut
     
     
     # Accepts arrow keys to move either the player or the menu cursor,

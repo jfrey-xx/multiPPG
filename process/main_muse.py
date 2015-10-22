@@ -82,13 +82,14 @@ if __name__ == "__main__":
   xDim = values_shape[0]
   yDim = values_shape[1]
 
+  print "shape: ", values_shape
   # from http://stackoverflow.com/a/5550156
   #spectrArray_base = mpc.Array(ctypes.c_double, range(xDim*yDim))
   #spectrArray = np.ctypeslib.as_array(spectrArray_base.get_obj())
   #spectrArray = spectrArray.reshape(xDim, yDim)
 
-  spectrArray = mpc.Array('f', range(xDim*yDim))
-
+  vcopy = np.array(values)
+  vcopy = vcopy[0:50,0:50]
   print "launch main loop" 
   a = 0
   #p = mpc.Process(target=getRealData, args=(spectrArray, xDim, yDim))
@@ -96,11 +97,11 @@ if __name__ == "__main__":
   print "end main loop" 
 
   print "init env"
-  panda3dObj=visualization.MyTapper(spectrArray, xDim, yDim)
+  panda3dObj=visualization.MyTapper(vcopy)
   print "finish init env" 
 
-  p2 = mpc.Process(target= panda3dObj.step(), args=())
-  p2.start()
+  #p2 = mpc.Process(target= panda3dObj.step(), args=())
+  #p2.start()
 
   print "before while"
   
@@ -111,7 +112,12 @@ if __name__ == "__main__":
     monit()
     # work on local copy
     vcopy = np.array(processor.morlet.values)
-    vcopy = np.reshape(vcopy, xDim*yDim)    
+    # in case copy went wrong, correct
+    vcopy = vcopy.reshape(xDim, yDim)
+    vcopy = vcopy[1:0,1:10]
+    vcopy = np.random.random((50,50))
+    panda3dObj.inArray = vcopy
+    panda3dObj.step()
     #print "main:", vcopy[1:10]
     #print np.shape(vcopy)
     #spectrArray[:] = vcopy[:]
