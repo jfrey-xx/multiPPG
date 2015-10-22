@@ -8,7 +8,7 @@ import plot
 
 import sys; sys.path.append('../src') # help python find // files relative to this script
 import sample_rate
-import immersion
+import visualization
 import streamerLSL
 
 # algo 0: processDummy
@@ -70,8 +70,12 @@ if __name__ == "__main__":
   monit.activate()
 
   print "init env"
-  environment = immersion.Immersion(processor.morlet.values)
-  environment.activate()
+  values = processor.morlet.values
+  values_shape = np.shape(values)
+  xDim = values_shape[0]
+  yDim = values_shape[1]
+  panda3dObj=visualization.MyTapper(values, xDim, yDim)
+  
   print "finish init env" 
 
   while True:
@@ -79,3 +83,4 @@ if __name__ == "__main__":
     processor(np.array(sample))
     # compute FPS
     monit()
+    panda3dObj.step()

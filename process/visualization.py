@@ -291,10 +291,6 @@ def makeSurface(rand_array, surface=None, scale=15):
 
 class MyTapper(DirectObject):
     def __init__(self, arrayIn, xDim, yDim):
-        hrIn = 0
-        hrvIn = 0
-        accel_ang1 = 0
-        accel_ang2 = 0
         
         self.base = base
         self.base.setBackgroundColor(0.05,0.05,0.05)        
@@ -339,12 +335,6 @@ class MyTapper(DirectObject):
         
         self.HRtext = OnscreenText(text = 'HR', style=1, fg=(1,1,1,1), pos = (1, -0.95), scale = 0.07)
         self.arrayIn = arrayIn
-        self.hrIn = hrIn
-        self.hrvIn = hrvIn
-        self.accel_ang1 = accel_ang1
-        self.accel_ang2 = accel_ang2
-        self.Accel1_text = OnscreenText(text = 'Accel_ang1', style=1, fg=(1,1,1,1), pos = (1, -0.78), scale = 0.07)
-        self.Accel2_text = OnscreenText(text = 'Accel_ang2', style=1, fg=(1,1,1,1), pos = (1, -0.85), scale = 0.07)
         
         
         # Create the surface
@@ -399,11 +389,6 @@ class MyTapper(DirectObject):
         # Create a frame
         frame = DirectFrame(text = "main", scale = 0.001)
         # Add button
-        self.bar = DirectWaitBar(text = "HRV", 
-                                 scale = (0.5, 0.9, 0.5), 
-                                value = 50, 
-                                pos = (-0.9, 0.1, -0.95),# (self.base.a2dLeft, self.base.a2dBottom), #
-                                barColor = (0.8, 0.2, 0.2, 0.9))
         
         self.oldTaskTime = 0.0
         taskMgr.add(self.updateSurface, name="updateSurface")
@@ -424,15 +409,8 @@ class MyTapper(DirectObject):
         if diff > self.updatePeriod:
             rand_array = self.formatSurfArray()
             makeSurface(rand_array, self.surf, scale=self.scale)
-            self.bar['value'] = self.hrvIn.value
             
-            hrInValue = self.hrIn.value
-            self.HRtext.setText(str(hrInValue)+' BPM')
-            accel_ang1_value = self.accel_ang1.value
-            accel_ang2_value = self.accel_ang2.value
-            self.Accel1_text.setText(str(accel_ang1_value)+' rad')
-            self.Accel2_text.setText(str(accel_ang2_value)+' rad')
-            
+            hrInValue = 60
             lightScale = (hrInValue - 50.)/(110.-50.)
             #print('Light scale: %f'%lightScale)
             #self.ambientLight.setColor(Vec4(lightScale, lightScale, lightScale, 1))
@@ -492,19 +470,8 @@ class MyTapper(DirectObject):
         if (self.keyMap["cam-right"]!=0):
             base.camera.setH(base.camera.getH() -dd)
             
-        if self.accel_ang1.value != 0:
-            dd = self.accel_ang1.value
-            base.camera.setPos(base.camera.getPos() - (dd,0,0))
-        
-        if self.accel_ang2 != 0:
-            dd = self.accel_ang2.value*100.
-            base.camera.setPos(base.camera.getPos() + (0,0,dd))
-
         return task.cont
         
-    def incBar(self, arg):
-        """Update the health bar"""
-        self.bar['value'] +=	arg
 			
 			
 
