@@ -279,8 +279,8 @@ def makeSurface(rand_array, surface=None, scale=15):
                 
                 
             
-            print(vertex1, vertex2, vertex3)
-            print(vertex4, vertex5, vertex6)
+            #print(vertex1, vertex2, vertex3)
+            #print(vertex4, vertex5, vertex6)
             
     else:
         # Update the data of the surface Geom
@@ -290,7 +290,42 @@ def makeSurface(rand_array, surface=None, scale=15):
     
 
 class MyTapper(DirectObject):
-    def __init__(self, arrayIn):
+    def __init__(self, arrayIn, xDim, yDim, hrIn, hrvIn, accel_ang1, accel_ang2 ):
+        
+#        # Initialize the TCP/IP connection #######################
+#        TCP_IP = '0.0.0.0'
+#        TCP_PORT = 30000
+#        BUFFER_SIZE = 500000
+#        
+#        eegServer= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#        eegServer.bind((TCP_IP, TCP_PORT))
+#        eegServer.listen(1) #queue only 1 connect request 
+#        
+#        print 'Waiting for EEG acquisition client...'
+#        self.conn, addr = eegServer.accept()
+#        print 'EEG acquisiton application address:', addr
+#        #Read header1: Device, Sampling freq, dataType and channels
+#        nBytes_4B = array.array("B", self.conn.recv(4)) 
+#        nBytes = struct.unpack('i',nBytes_4B[::-1])[0]
+#        #nBytes equals to number of bytes to read from the connection
+#         #[0] is used to get an int32 rather than turple
+#        package = self.conn.recv(nBytes)
+#        #edit and obtain parameters from the package
+#        self.mesDevice, self.mesFs, self.mesTags, self.mesCh = mesHeaderFormat(package)
+#        
+#        #Read header2: Channel labels
+#        nBytes_4B = array.array("B", self.conn.recv(4)) 
+#        nBytes = struct.unpack('i',nBytes_4B[::-1])[0]
+#        package = self.conn.recv(nBytes)t=MyTapper()
+#        mesChLabels = package.split(',')
+#        
+##        # Prepare buffers here
+##        bufferSeconds = 10
+##        nSamples = self.mesFs*bufferSeconds
+##        columns = len(self.mesTags)
+##        bufferEEG = np.zeros((nSamples,columns))
+##        timeVec = np.arange(nSamples)/self.mesFs
+#        #####################################################
         
         self.base = base
         self.base.setBackgroundColor(0.05,0.05,0.05)        
@@ -335,12 +370,26 @@ class MyTapper(DirectObject):
         
         self.HRtext = OnscreenText(text = 'HR', style=1, fg=(1,1,1,1), pos = (1, -0.95), scale = 0.07)
         self.arrayIn = arrayIn
+        self.hrIn = hrIn
+        self.hrvIn = hrvIn
+        self.accel_ang1 = accel_ang1
+        self.accel_ang2 = accel_ang2
+        self.Accel1_text = OnscreenText(text = 'Accel_ang1', style=1, fg=(1,1,1,1), pos = (1, -0.78), scale = 0.07)
+        self.Accel2_text = OnscreenText(text = 'Accel_ang2', style=1, fg=(1,1,1,1), pos = (1, -0.85), scale = 0.07)
         
         
         # Create the surface
+        self.origSurfSize = (xDim, yDim)
+        if xDim > 20:
+            xDim = 20
+        if yDim > 100:
+            yDim = 100
+        self.newSurfSize = (xDim, yDim)
+        self.old_arrayOut = np.zeros((self.newSurfSize[0], self.newSurfSize[1], 2))
         self.scale = 30
-        #time.sleep(0.1)
-        self.surf = makeSurface(self.arrayIn, None)
+        time.sleep(0.1)
+        rand_array = self.formatSurfArray()
+        self.surf = makeSurface(rand_array, None)
         print('Surface successfully created.')
         snode = GeomNode('surface')
         snode.addGeom(self.surf)
@@ -381,6 +430,11 @@ class MyTapper(DirectObject):
         # Create a frame
         frame = DirectFrame(text = "main", scale = 0.001)
         # Add button
+        self.bar = DirectWaitBar(text = "HRV", 
+                                 scale = (0.5, 0.9, 0.5), 
+                                value = 50, 
+                                pos = (-0.9, 0.1, -0.95),# (self.base.a2dLeft, self.base.a2dBottom), #
+                                barColor = (0.8, 0.2, 0.2, 0.9))
         
         self.oldTaskTime = 0.0
         taskMgr.add(self.updateSurface, name="updateSurface")
@@ -399,9 +453,17 @@ class MyTapper(DirectObject):
     def updateSurface(self, task): # Also, update the bar
         diff = task.time - self.oldTaskTime
         if diff > self.updatePeriod:
-            makeSurface(self.arrayIn, self.surf, scale=self.scale)
+            rand_array = self.formatSurfArray()
+            makeSurface(rand_array, self.surf, scale=self.scale)
+            self.bar['value'] = self.hrvIn.value
             
-            hrInValue = 60
+            hrInValue = self.hrIn.value
+            self.HRtext.setText(str(hrInValue)+' BPM')
+            accel_ang1_value = self.accel_ang1.value
+            accel_ang2_value = self.accel_ang2.value
+            self.Accel1_text.setText(str(accel_ang1_value)+' rad')
+            self.Accel2_text.setText(str(accel_ang2_value)+' rad')
+            
             lightScale = (hrInValue - 50.)/(110.-50.)
             #print('Light scale: %f'%lightScale)
             #self.ambientLight.setColor(Vec4(lightScale, lightScale, lightScale, 1))
@@ -411,6 +473,21 @@ class MyTapper(DirectObject):
             
         return Task.cont            
         
+    def formatSurfArray(self):
+        """Outputs an array that can be drawn as a surface"""
+        
+        # Format the array
+        arrayOut = np.array(self.arrayIn).reshape(self.origSurfSize)
+        
+        arrayOut = arrayOut[0:self.newSurfSize[0], 0:self.newSurfSize[1]]
+        
+        c = np.dstack((self.old_arrayOut, arrayOut))
+        mean_arrayOut = np.mean(c, axis=2)
+        
+        self.old_arrayOut = arrayOut
+        #print(self.old_arrayOut.shape)
+    
+        return mean_arrayOut
     
     
     # Accepts arrow keys to move either the player or the menu cursor,
@@ -446,8 +523,19 @@ class MyTapper(DirectObject):
         if (self.keyMap["cam-right"]!=0):
             base.camera.setH(base.camera.getH() -dd)
             
+        if self.accel_ang1.value != 0:
+            dd = self.accel_ang1.value
+            base.camera.setPos(base.camera.getPos() - (dd,0,0))
+        
+        if self.accel_ang2 != 0:
+            dd = self.accel_ang2.value*100.
+            base.camera.setPos(base.camera.getPos() + (0,0,dd))
+
         return task.cont
         
+    def incBar(self, arg):
+        """Update the health bar"""
+        self.bar['value'] +=	arg
 			
 			
 

@@ -79,8 +79,9 @@ if __name__ == "__main__":
 
   values = processor.morlet.values
   values_shape = np.shape(values)
-  xDim = values_shape[0]
-  yDim = values_shape[1]
+
+  xDim = 23
+  yDim = 100
 
   print "shape: ", values_shape
   # from http://stackoverflow.com/a/5550156
@@ -89,7 +90,7 @@ if __name__ == "__main__":
   #spectrArray = spectrArray.reshape(xDim, yDim)
 
   vcopy = np.array(values)
-  vcopy = vcopy[0:50,0:50]
+  vcopy = vcopy[0:xDim,0:yDim]
   print "launch main loop" 
   a = 0
   #p = mpc.Process(target=getRealData, args=(spectrArray, xDim, yDim))
@@ -97,7 +98,13 @@ if __name__ == "__main__":
   print "end main loop" 
 
   print "init env"
-  panda3dObj=visualization.MyTapper(vcopy)
+  heartRateVar = mpc.Value('f', 0.0)
+  heartRate = mpc.Value('i', 0)
+  accel_ang1 = mpc.Value('f', 0)
+  accel_ang2 = mpc.Value('f', 0)
+ 
+  spectrArray = mpc.Array('f', range(xDim*yDim))
+  panda3dObj=visualization.MyTapper(spectrArray, xDim, yDim, heartRate, heartRateVar,  accel_ang1,  accel_ang2)
   print "finish init env" 
 
   #p2 = mpc.Process(target= panda3dObj.step(), args=())
@@ -105,18 +112,25 @@ if __name__ == "__main__":
 
   print "before while"
   
+  start_time =  0
+
   while True:
     sample, timestamp = reader()
     processor(np.array(sample))
     # compute FPS
     monit()
-    # work on local copy
-    vcopy = np.array(processor.morlet.values)
-    # in case copy went wrong, correct
-    vcopy = vcopy.reshape(xDim, yDim)
-    vcopy = vcopy[1:0,1:10]
-    vcopy = np.random.random((50,50))
-    panda3dObj.inArray = vcopy
+    if  timestamp != None and timestamp - start_time  > 0.5:
+      start_time = timestamp 
+      # work on local copy
+      vcopy = np.array(processor.morlet.values)
+      # in case copy went wrong, correct
+      vcopy = vcopy.reshape(values_shape)
+      vcopy = vcopy[0:xDim,0:yDim]
+      vcopy = vcopy*1000
+      vcopy = vcopy.reshape(yDim*xDim)
+      #vcopy = np.random.random((50,50)) * 1000
+      spectrArray[:] = vcopy[:]
+      #panda3dObj.inArray = vcopy
     panda3dObj.step()
     #print "main:", vcopy[1:10]
     #print np.shape(vcopy)
