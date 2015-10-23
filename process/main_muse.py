@@ -13,21 +13,72 @@ import sample_rate
 import visualization
 import streamerLSL
 
-# algo 0: processDummy
-# algo 1: processLUV
-# algo 2: processUfuk
-# algo 3: processMuse
-
 # from http://stackoverflow.com/a/8090605
 def rebin(a, shape):
     sh = shape[0],a.shape[0]//shape[0],shape[1],a.shape[1]//shape[1]
     return a.reshape(sh).mean(-1).mean(1)
 
-def getRealData(spectrArray, xDim, yDim):
-  print "Here:", a
+def getRealData(spectrArray, xDim, yDim, reader, chan, debug, sizeArray):
+  """
+  Fetch LSL data, deal with all processing
+  """
+
+  # Will trigger plots if any
+  plot.PlotLaunch()
+  name = "Process " + stream + "_" + str(user_id)
+
+  processor = processMuse.ProcessMuse(reader.getSamplingRate(0), chan, attach_plot=debug)
+
+  values = processor.morlet.values
+  values_shape = np.shape(values)
+  print "Morlet shape:", values_shape
+
+  # maybe use in the futur to adapt panda world size
+  sizeArray[0] = values_shape[0]
+  sizeArray[1] = values_shape[1]
+  
+  # Init the thread that will monitor FPS
+  monit = sample_rate.PluginSampleRate(name=name)
+  monit.activate()
+  start_time = 0
   while True:
-    print "fun:", spectrArray[1:10]
-    pass # print "getReal:", spectrArray
+    sample, timestamp = reader()
+    processor(np.array(sample))
+    # compute FPS
+    monit()
+    if  timestamp != None and timestamp - start_time  > 0.1:
+      start_time = timestamp 
+      # work on local copy
+      vcopy = np.array(processor.morlet.values)
+      #print vcopy
+      if vcopy.max() == 0:
+        continue
+      # in case copy went wrong, correct
+      vcopy = vcopy.reshape(values_shape)
+
+      # rebin x (frequency), ie reduce with average
+      # FIXME: will probably crash with sampling rate different than 220 -- xDim and yDim must be divider of original shape
+      vcopy = rebin(vcopy, (xDim, yDim))
+
+      # normalize and "move" in scene
+      vcopy *= 1.0/vcopy.max() 
+      vcopy = vcopy*250 - 300 
+
+      # copy to shared memory and correct "orientation"
+      # (we want low freq on the left and new data in front)
+      vcopy = vcopy.reshape(yDim*xDim)
+      spectrArray[:] = vcopy[::-1]
+
+def runEnv(spectrArray, xDim, yDim ):
+  heartRateVar = mpc.Value('f', 0.0)
+  heartRate = mpc.Value('i', 0)
+  accel_ang1 = mpc.Value('f', 0)
+  accel_ang2 = mpc.Value('f', 0)
+  print "===== Init panda ====="
+  panda3dObj=visualization.MyTapper(spectrArray, xDim, yDim, heartRate, heartRateVar,  accel_ang1,  accel_ang2)
+  print "===== End panda ====="
+  while True:
+    panda3dObj.step()
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
@@ -54,7 +105,6 @@ if __name__ == "__main__":
   chan = args.chan
 
   print "Stream type:", stream
-  print "Algo:", algo
   print "User ID:", user_id
   print "Debug:", debug
   print "Chan:", chan
@@ -64,93 +114,30 @@ if __name__ == "__main__":
   print "Nb streams found:", reader.nb_streams 
   for i in range(reader.nb_streams):
     print reader.getSamplingRate(i), "Hz for channel", i
-  
-  # At the moment only one algo for EEG, number 3
-  if algo == 3:
-    processor = processMuse.ProcessMuse(reader.getSamplingRate(0), chan, attach_plot=debug)
-  else:
-    raise NameError('AlgoNotFound')
-      
-  # FIXME: parameters for output channel
-  fps = reader.getSamplingRate(0) 
-
-  # Will trigger plots if any
-  plot.PlotLaunch()
-  
-  name = "Process " + stream + "_" + str(user_id)
-  # Init the thread that will monitor FPS
-  monit = sample_rate.PluginSampleRate(name=name)
-  monit.activate()
-
-  values = processor.morlet.values
-  values_shape = np.shape(values)
-  print "Morlet shape:", values_shape
 
   xDim = 20
   yDim = 64 
 
-  print "shape: ", values_shape
-  # from http://stackoverflow.com/a/5550156
-  #spectrArray_base = mpc.Array(ctypes.c_double, range(xDim*yDim))
-  #spectrArray = np.ctypeslib.as_array(spectrArray_base.get_obj())
-  #spectrArray = spectrArray.reshape(xDim, yDim)
+  spectrArray = mpc.Array('f', range(xDim*yDim))
+  sizeArray = mpc.Array('i', [-1,-1])
 
   print "launch main loop" 
-  #p = mpc.Process(target=getRealData, args=(spectrArray, xDim, yDim))
-  #p.start()
+  p = mpc.Process(target=getRealData, args=(spectrArray, xDim, yDim, reader, chan, debug, sizeArray))
+  p.start()
   print "end main loop" 
 
+  while sizeArray[0] == -1:
+    pass
+
+  print "Got size in main proc:", sizeArray[0], " by ", sizeArray[1]
+  # TODO: use info to set xDim / yDim 
+
   print "init env"
-  heartRateVar = mpc.Value('f', 0.0)
-  heartRate = mpc.Value('i', 0)
-  accel_ang1 = mpc.Value('f', 0)
-  accel_ang2 = mpc.Value('f', 0)
- 
-  spectrArray = mpc.Array('f', range(xDim*yDim))
-  panda3dObj=visualization.MyTapper(spectrArray, xDim, yDim, heartRate, heartRateVar,  accel_ang1,  accel_ang2)
-  print "finish init env" 
+  p_env = mpc.Process(target=runEnv, args=(spectrArray, xDim, yDim))
+  p_env.start()
 
-  #p2 = mpc.Process(target= panda3dObj.step(), args=())
-  #p2.start()
-
-  print "before while"
-  
-  start_time =  0
-
-  # take center of morlet in Y
-  #center = values_shape[1] / 2
-  #start_point = center-yDim / 2
-  #stop_point  = center+yDim / 2
-  #print "startY morlet:", start_point, "stopY morlet:", stop_point
-   
-  while True:
-    sample, timestamp = reader()
-    processor(np.array(sample))
-    # compute FPS
-    monit()
-    if  timestamp != None and timestamp - start_time  > 0.5:
-      start_time = timestamp 
-      # work on local copy
-      vcopy = np.array(processor.morlet.values)
-      # in case copy went wrong, correct
-      vcopy = vcopy.reshape(values_shape)
-
-      # rebin x (frequency), ie reduce with average
-      # FIXME: will probably crash with sampling rate different than 220 -- xDim and yDim must be divider of original shape
-      vcopy = rebin(vcopy, (xDim, yDim))
-
-      # normalize and "move" in scene
-      vcopy *= 1.0/vcopy.max() 
-      vcopy = vcopy*250 - 300 
-
-      # copy to shared memory and correct "orientation"
-      # (we want low freq on the left and new data in front)
-      vcopy = vcopy.reshape(yDim*xDim)
-      spectrArray[:] = vcopy[::-1]
-
-    panda3dObj.step()
-
+  print "Wait for end..."
   p.join()
-  p2.join()
+  p_env.join()
       
   print('Game Over.')
