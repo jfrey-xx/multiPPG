@@ -18,6 +18,11 @@ import streamerLSL
 # algo 2: processUfuk
 # algo 3: processMuse
 
+# from http://stackoverflow.com/a/8090605
+def rebin(a, shape):
+    sh = shape[0],a.shape[0]//shape[0],shape[1],a.shape[1]//shape[1]
+    return a.reshape(sh).mean(-1).mean(1)
+
 def getRealData(spectrArray, xDim, yDim):
   print "Here:", a
   while True:
@@ -79,9 +84,10 @@ if __name__ == "__main__":
 
   values = processor.morlet.values
   values_shape = np.shape(values)
+  print "Morlet shape:", values_shape
 
-  xDim = 23
-  yDim = 100
+  xDim = 20
+  yDim = 64 
 
   print "shape: ", values_shape
   # from http://stackoverflow.com/a/5550156
@@ -89,10 +95,7 @@ if __name__ == "__main__":
   #spectrArray = np.ctypeslib.as_array(spectrArray_base.get_obj())
   #spectrArray = spectrArray.reshape(xDim, yDim)
 
-  vcopy = np.array(values)
-  vcopy = vcopy[0:xDim,0:yDim]
   print "launch main loop" 
-  a = 0
   #p = mpc.Process(target=getRealData, args=(spectrArray, xDim, yDim))
   #p.start()
   print "end main loop" 
@@ -114,6 +117,12 @@ if __name__ == "__main__":
   
   start_time =  0
 
+  # take center of morlet in Y
+  #center = values_shape[1] / 2
+  #start_point = center-yDim / 2
+  #stop_point  = center+yDim / 2
+  #print "startY morlet:", start_point, "stopY morlet:", stop_point
+   
   while True:
     sample, timestamp = reader()
     processor(np.array(sample))
@@ -125,8 +134,10 @@ if __name__ == "__main__":
       vcopy = np.array(processor.morlet.values)
       # in case copy went wrong, correct
       vcopy = vcopy.reshape(values_shape)
-      vcopy = vcopy[0:xDim,0:yDim]
-      vcopy = vcopy*1000
+      # rebin x (frequency), ie reduce with average
+      # FIXME: will probably crash with sampling rate different than 220
+      vcopy = rebin(vcopy, (xDim, yDim))
+      vcopy = vcopy*250 - 500 
       vcopy = vcopy.reshape(yDim*xDim)
       #vcopy = np.random.random((50,50)) * 1000
       spectrArray[:] = vcopy[:]
