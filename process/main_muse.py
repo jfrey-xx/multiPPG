@@ -134,19 +134,21 @@ if __name__ == "__main__":
       vcopy = np.array(processor.morlet.values)
       # in case copy went wrong, correct
       vcopy = vcopy.reshape(values_shape)
+
       # rebin x (frequency), ie reduce with average
-      # FIXME: will probably crash with sampling rate different than 220
+      # FIXME: will probably crash with sampling rate different than 220 -- xDim and yDim must be divider of original shape
       vcopy = rebin(vcopy, (xDim, yDim))
-      vcopy = vcopy*250 - 500 
+
+      # normalize and "move" in scene
+      vcopy *= 1.0/vcopy.max() 
+      vcopy = vcopy*250 - 300 
+
+      # copy to shared memory and correct "orientation"
+      # (we want low freq on the left and new data in front)
       vcopy = vcopy.reshape(yDim*xDim)
-      #vcopy = np.random.random((50,50)) * 1000
-      spectrArray[:] = vcopy[:]
-      #panda3dObj.inArray = vcopy
+      spectrArray[:] = vcopy[::-1]
+
     panda3dObj.step()
-    #print "main:", vcopy[1:10]
-    #print np.shape(vcopy)
-    #spectrArray[:] = vcopy[:]
-    #spectrArray = processor.morlet.values
 
   p.join()
   p2.join()
