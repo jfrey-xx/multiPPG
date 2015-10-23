@@ -115,7 +115,7 @@ if __name__ == "__main__":
   for i in range(reader.nb_streams):
     print reader.getSamplingRate(i), "Hz for channel", i
 
-  xDim = 20
+  xDim = 16 
   yDim = 64 
 
   spectrArray = mpc.Array('f', range(xDim*yDim))
